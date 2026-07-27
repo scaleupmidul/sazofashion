@@ -47,7 +47,7 @@ interface ImageInputProps {
 
 const ImageInput: React.FC<ImageInputProps> = ({ currentImage, onImageChange, options }) => {
     const { notify } = useAppStore();
-    const [inputType, setInputType] = useState<'upload' | 'url'>('upload');
+    const [inputType, setInputType] = useState<'upload' | 'url'>('url');
     const [isProcessing, setIsProcessing] = useState(false);
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
