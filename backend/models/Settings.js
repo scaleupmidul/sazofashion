@@ -101,6 +101,7 @@ const SettingsSchema = new mongoose.Schema({
   // Brand Video Settings
   brandVideoEnabled: { type: Boolean, default: true },
   brandVideoUrl: { type: String, default: '' },
+  brandVideoMobileUrl: { type: String, default: '' },
   brandVideoTitle: { type: String, default: 'Sazo Couture' },
   brandVideoSubtitle: { type: String, default: 'Behind The Craft' },
   brandVideoPoster: { type: String, default: '' },
