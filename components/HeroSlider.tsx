@@ -75,7 +75,15 @@ const HeroSlider: React.FC = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [prevSlide, setPrevSlide] = useState<number | null>(null);
     const [loadedSlides, setLoadedSlides] = useState<Record<number, boolean>>({});
+    const [isMobile, setIsMobile] = useState(false);
     
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     useEffect(() => {
         const prev = currentSlide;
         return () => {
@@ -144,6 +152,8 @@ const HeroSlider: React.FC = () => {
                 if (isActive) zIndex = 10;
                 else if (isPrev) zIndex = 5;
 
+                const activeImage = isMobile && slide.mobileImage ? slide.mobileImage : (slide.image || slide.mobileImage || '');
+
                 return (
                     <motion.div
                         key={index}
@@ -161,7 +171,7 @@ const HeroSlider: React.FC = () => {
                         }}
                     >
                         <HeroImage 
-                            src={slide.image} 
+                            src={activeImage} 
                             alt={slide.title} 
                             scrollYProgress={scrollYProgress}
                             onLoad={() => handleImageLoad(index)} 
