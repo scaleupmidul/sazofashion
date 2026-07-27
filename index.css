@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;0,6..96,600;0,6..96,700;1,6..96,400&family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Tenor+Sans&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-brand-offwhite: #F9F7F2;
+    --color-brand-charcoal: #1A1A1A;
+    --color-brand-accent: #C38B7C;
+    --color-brand-border: rgba(26, 26, 26, 0.08);
+    --color-brand-muted: #4A4A4A;
+  }
+
+  html {
+    scroll-behavior: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-top: 80px;
+  }
+
+  body {
+    @apply bg-brand-offwhite text-brand-charcoal antialiased overflow-x-hidden font-sans;
+    cursor: default;
+    line-height: 1.6;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  .container-luxury {
+    @apply max-w-[1750px] mx-auto px-3 sm:px-10 lg:px-16 xl:px-20;
+  }
+
+  .luxury-button {
+    @apply relative h-12 md:h-14 lg:h-16 px-8 md:px-10 lg:px-12 overflow-hidden flex items-center justify-center 
+           bg-brand-charcoal text-white text-[10px] md:text-[11px] lg:text-[13px] font-display font-black uppercase tracking-[0.255em] 
+           transition-all duration-700 active:scale-95;
+  }
+
+  .luxury-button-outline {
+    @apply relative h-12 md:h-14 lg:h-16 px-8 md:px-10 lg:px-12 overflow-hidden flex items-center justify-center 
+           bg-transparent text-brand-charcoal border border-brand-charcoal text-[10px] md:text-[11px] lg:text-[13px] font-display font-black uppercase tracking-[0.255em] 
+           transition-all duration-700 active:scale-95;
+  }
+
+  .luxury-input {
+    @apply w-full px-6 py-5 border-b border-brand-border bg-transparent outline-none 
+           transition-all duration-500 focus:border-brand-accent text-xs font-sans;
+  }
+
+  .luxury-card {
+    @apply bg-white border border-brand-border transition-all duration-700 overflow-hidden;
+  }
+
+  /* Animations */
+  .reveal-up {
+    @apply opacity-0 translate-y-8 animate-[reveal_1.2s_ease-out_forwards];
+  }
+
+  .page-transition {
+    @apply animate-[fadeIn_0.8s_ease-in-out];
+  }
+
+  @keyframes reveal {
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-brand-offwhite;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-brand-charcoal/10 hover:bg-brand-charcoal/20 transition-colors;
+  }
+  
+  .custom-scrollbar-light::-webkit-scrollbar-thumb {
+      @apply bg-white/10 hover:bg-white/20;
+  }
+
+  /* Luxury Range Slider Styling */
+  .luxury-range-slider {
+    @apply appearance-none bg-transparent cursor-pointer;
+  }
+
+  .luxury-range-slider::-webkit-slider-runnable-track {
+    @apply bg-stone-100 h-[2px] rounded-full;
+  }
+
+  .luxury-range-slider::-webkit-slider-thumb {
+    @apply appearance-none w-4 h-4 rounded-full bg-brand-charcoal border-2 border-white shadow-md -mt-[7px] transition-transform duration-300 hover:scale-110 active:scale-95;
+  }
+
+  .luxury-range-slider::-moz-range-track {
+    @apply bg-stone-100 h-[2px] rounded-full;
+  }
+
+  .luxury-range-slider::-moz-range-thumb {
+    @apply w-4 h-4 rounded-full bg-brand-charcoal border-2 border-white shadow-md transition-transform duration-300 hover:scale-110 active:scale-95 border-none;
+  }
+  .luxury-text-gradient {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(
+      to right,
+      #000 0%,
+      #000 45%,
+      #ffffff00 50%,
+      #000 55%,
+      #000 100%
+    );
+    background-size: 200% auto;
+    animation: textShine 4s linear infinite;
+  }
+
+  @keyframes textShine {
+    0% { background-position: 0% center; }
+    100% { background-position: 200% center; }
+  }
+}
+
+/* Base resets & utilities */
+@layer utilities {
+  .text-brand-charcoal {
+    color: var(--color-brand-charcoal);
+  }
+  .bg-brand-offwhite {
+    background-color: var(--color-brand-offwhite);
+  }
+}

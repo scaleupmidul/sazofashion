@@ -1,0 +1,73 @@
+
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="https://i.ibb.co.com/ZRKmxrGb/SAZO-4.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    
+    <title>SAZO - World's Best Women Fashion Brand</title>
+    
+    <meta name="description" content="Discover SAZO - Your premium destination for world-class women's fashion, elegant apparel, and exclusive accessories. Elevate your style with our curated collection." />
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SAZO - Women Fashion Brand" />
+    <meta property="og:description" content="Discover SAZO - Your premium destination for world-class women's fashion and exclusive accessories." />
+    <meta property="og:image" content="https://og-image-as-a-service.vercel.app/api?title=SAZO&subtitle=World%20Best%20Women%20Fashion&backgroundColor=%23fff1f2&titleColor=%231c1c1c&subtitleColor=%23be123c&titleFontSize=150&subtitleFontSize=60" />
+
+    <!-- Font Optimization -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Image CDN Optimization -->
+    <link rel="preconnect" href="https://images.unsplash.com">
+    <link rel="dns-prefetch" href="https://images.unsplash.com">
+
+    <!-- LCP OPTIMIZATION: Responsive Preloads -->
+    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=800" media="(max-width: 640px)" fetchpriority="high">
+    <link rel="preload" as="image" href="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&q=80&w=1920" media="(min-width: 641px)" fetchpriority="high">
+
+    <!-- JSON-LD Structured Data for SAZO Brand -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://sazo-fashion.com/#organization",
+          "name": "SAZO",
+          "url": "https://sazo-fashion.com/",
+          "logo": "https://i.ibb.co.com/ZRKmxrGb/SAZO-4.png",
+          "description": "Discover SAZO - Your premium destination for world-class women's fashion, elegant apparel, and exclusive accessories. Elevate your style with our curated collection.",
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "customer service",
+            "email": "sazo.ceo@gmail.com"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://sazo-fashion.com/#website",
+          "url": "https://sazo-fashion.com/",
+          "name": "SAZO",
+          "description": "World's Best Women Fashion Brand",
+          "publisher": {
+            "@id": "https://sazo-fashion.com/#organization"
+          },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://sazo-fashion.com/shop?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
