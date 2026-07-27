@@ -316,8 +316,8 @@ const HomePage: React.FC = () => {
                     onClick={() => navigate(cat.link)}
                     className={`group relative h-[420px] sm:h-[500px] overflow-hidden cursor-pointer ${
                       hasImage 
-                        ? 'bg-stone-900 border border-stone-800 shadow-md' 
-                        : 'bg-[#f0ede8] border border-stone-200/80 shadow-sm'
+                        ? 'bg-stone-900 shadow-md' 
+                        : 'bg-[#f0ede8] shadow-sm'
                     }`}
                   >
                     {hasImage ? (
@@ -327,8 +327,6 @@ const HomePage: React.FC = () => {
                           alt={cat.title} 
                           className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-108"
                         />
-                        {/* Subtle Inner Border Frame */}
-                        <div className="absolute inset-3 border border-white/10 group-hover:border-white/30 transition-colors duration-700 pointer-events-none z-10" />
 
                         {/* Gradient Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10 transition-opacity duration-500 group-hover:from-black/95" />
@@ -351,7 +349,6 @@ const HomePage: React.FC = () => {
                       <>
                         {/* Blank Light Product Card Style */}
                         <div className="w-full h-full bg-[#f0ede8]" />
-                        <div className="absolute inset-3 border border-stone-300/40 group-hover:border-stone-400/80 transition-colors duration-500 pointer-events-none z-10" />
                         
                         <div className="absolute inset-0 p-6 sm:p-8 flex flex-col justify-end z-20 bg-gradient-to-t from-stone-300/30 via-transparent to-transparent">
                           <span className="text-[10px] font-sans font-medium uppercase tracking-[0.25em] text-stone-500 mb-1.5">
@@ -382,7 +379,7 @@ const HomePage: React.FC = () => {
                   className={categoryDisplayItems.length === 2 ? 'sm:col-span-2 lg:col-span-2' : ''}
                 >
                   <BrandVideoCard
-                    videoUrl={settings.brandVideoUrl || 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-posing-in-a-black-outfit-41310-large.mp4'}
+                    videoUrl={settings.brandVideoUrl || ''}
                     title={settings.brandVideoTitle || 'Sazo Couture'}
                     subtitle={settings.brandVideoSubtitle || 'Behind The Craft'}
                     posterImage={settings.brandVideoPoster || ''}
