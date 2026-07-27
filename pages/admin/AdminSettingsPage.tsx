@@ -347,7 +347,7 @@ const AdminSettingsPage: React.FC = () => {
             setContactMapEmbed(settings.contactMapEmbed || '');
 
             setBrandVideoEnabled(settings.brandVideoEnabled ?? true);
-            setBrandVideoUrl(settings.brandVideoUrl || 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-posing-in-a-black-outfit-41310-large.mp4');
+            setBrandVideoUrl(settings.brandVideoUrl ?? '');
             setBrandVideoTitle(settings.brandVideoTitle || 'Sazo Couture');
             setBrandVideoSubtitle(settings.brandVideoSubtitle || 'Behind The Craft');
             setBrandVideoPoster(settings.brandVideoPoster || '');
