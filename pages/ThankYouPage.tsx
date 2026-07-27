@@ -84,7 +84,7 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ orderId }) => {
                 </p>
                 <button 
                   onClick={() => navigate('/shop')} 
-                  className="px-12 py-5 rounded-none bg-brand-charcoal text-white text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-emerald-800 transition-all shadow-xl shadow-emerald-900/10"
+                  className="px-12 py-5 rounded-none bg-[#c38b7c] text-white text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-[#b0786a] transition-all shadow-xl shadow-[#c38b7c]/20"
                 >
                     Return to Collection
                 </button>
@@ -283,7 +283,7 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ orderId }) => {
                         <div className="mt-20 flex flex-col gap-4 relative z-10">
                             <button 
                               onClick={() => navigate('/shop')} 
-                              className="group w-full h-[72px] rounded-none bg-brand-charcoal text-white text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-emerald-900 transition-all flex items-center justify-center gap-6 shadow-xl shadow-brand-charcoal/10"
+                              className="group w-full h-[72px] rounded-none bg-[#c38b7c] text-white text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-[#b0786a] transition-all flex items-center justify-center gap-6 shadow-xl shadow-[#c38b7c]/20"
                             >
                                 <span>Continue Shopping</span>
                                 <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-2" />
