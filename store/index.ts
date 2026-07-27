@@ -37,6 +37,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     freeShippingEnabled: false,
     brandVideoEnabled: true,
     brandVideoUrl: '',
+    brandVideoMobileUrl: '',
     brandVideoTitle: 'Sazo Couture',
     brandVideoSubtitle: 'Behind The Craft',
     brandVideoPoster: '',
