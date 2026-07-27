@@ -12,7 +12,7 @@ interface BrandVideoCardProps {
 }
 
 export const BrandVideoCard: React.FC<BrandVideoCardProps> = ({
-  videoUrl = 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-posing-in-a-black-outfit-41310-large.mp4',
+  videoUrl = '',
   title = 'Sazo Couture',
   subtitle = 'Behind The Scenes',
   posterImage,
@@ -98,30 +98,37 @@ export const BrandVideoCard: React.FC<BrandVideoCardProps> = ({
     <>
       <div 
         onClick={() => setIsModalOpen(true)}
-        className={`group relative h-[380px] sm:h-[450px] overflow-hidden cursor-pointer bg-stone-900 border border-stone-800 ${className}`}
+        className={`group relative h-[380px] sm:h-[450px] overflow-hidden cursor-pointer bg-stone-900 ${className}`}
       >
-        {isYouTube ? (
-          <iframe
-            src={getYouTubeEmbedUrl(videoUrl)}
-            title={title}
-            className="w-full h-full scale-125 object-cover pointer-events-none"
-            allow="autoplay; encrypted-media"
+        {videoUrl ? (
+          isYouTube ? (
+            <iframe
+              src={getYouTubeEmbedUrl(videoUrl)}
+              title={title}
+              className="w-full h-full scale-125 object-cover pointer-events-none"
+              allow="autoplay; encrypted-media"
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              poster={activePoster}
+              autoPlay
+              loop
+              muted={isMuted}
+              playsInline
+              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+            />
+          )
+        ) : activePoster ? (
+          <img 
+            src={activePoster} 
+            alt={title} 
+            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" 
           />
         ) : (
-          <video
-            ref={videoRef}
-            src={videoUrl}
-            poster={activePoster}
-            autoPlay
-            loop
-            muted={isMuted}
-            playsInline
-            className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-          />
+          <div className="w-full h-full bg-stone-900" />
         )}
-
-        {/* Subtle Inner Border Frame */}
-        <div className="absolute inset-3 border border-white/10 group-hover:border-white/30 transition-colors duration-700 pointer-events-none z-10" />
 
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/10 transition-opacity duration-500 group-hover:from-black/95" />
