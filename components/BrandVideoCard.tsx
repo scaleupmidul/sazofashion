@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface BrandVideoCardProps {
   videoUrl?: string;
+  mobileVideoUrl?: string;
   title?: string;
   subtitle?: string;
   posterImage?: string;
@@ -13,6 +14,7 @@ interface BrandVideoCardProps {
 
 export const BrandVideoCard: React.FC<BrandVideoCardProps> = ({
   videoUrl = '',
+  mobileVideoUrl = '',
   title = 'Sazo Couture',
   subtitle = 'Behind The Scenes',
   posterImage,
@@ -26,11 +28,13 @@ export const BrandVideoCard: React.FC<BrandVideoCardProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
 
   React.useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  const activeVideoUrl = isMobile && mobileVideoUrl ? mobileVideoUrl : (videoUrl || mobileVideoUrl);
 
   React.useEffect(() => {
     if (videoRef.current) {
@@ -42,36 +46,31 @@ export const BrandVideoCard: React.FC<BrandVideoCardProps> = ({
           .catch(() => setIsPlaying(false));
       }
     }
-  }, [videoUrl, isMuted]);
+  }, [activeVideoUrl, isMuted]);
 
   const activePoster = isMobile 
     ? (mobilePosterImage || posterImage) 
     : (posterImage || mobilePosterImage);
 
-  const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+  const isYouTube = activeVideoUrl.includes('youtube.com') || activeVideoUrl.includes('youtu.be');
+
+  const getYouTubeId = (url: string) => {
+    if (!url) return '';
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|shorts\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : '';
+  };
 
   const getYouTubeEmbedUrl = (url: string) => {
-    let videoId = '';
-    if (url.includes('v=')) {
-      videoId = url.split('v=')[1]?.split('&')[0] || '';
-    } else if (url.includes('youtu.be/')) {
-      videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
-    } else if (url.includes('embed/')) {
-      videoId = url.split('embed/')[1]?.split('?')[0] || '';
-    }
-    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&playsinline=1`;
+    const videoId = getYouTubeId(url);
+    if (!videoId) return url;
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&showinfo=0&rel=0&playsinline=1&modestbranding=1&iv_load_policy=3`;
   };
 
   const getYouTubeModalUrl = (url: string) => {
-    let videoId = '';
-    if (url.includes('v=')) {
-      videoId = url.split('v=')[1]?.split('&')[0] || '';
-    } else if (url.includes('youtu.be/')) {
-      videoId = url.split('youtu.be/')[1]?.split('?')[0] || '';
-    } else if (url.includes('embed/')) {
-      videoId = url.split('embed/')[1]?.split('?')[0] || '';
-    }
-    return `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1&rel=0`;
+    const videoId = getYouTubeId(url);
+    if (!videoId) return url;
+    return `https://www.youtube.com/embed/${videoId}?autoplay=1&loop=1&playlist=${videoId}&controls=1&rel=0&modestbranding=1&iv_load_policy=3`;
   };
 
   const togglePlay = (e: React.MouseEvent) => {
@@ -100,24 +99,28 @@ export const BrandVideoCard: React.FC<BrandVideoCardProps> = ({
         onClick={() => setIsModalOpen(true)}
         className={`group relative h-[380px] sm:h-[450px] overflow-hidden cursor-pointer bg-stone-900 ${className}`}
       >
-        {videoUrl ? (
+        {activeVideoUrl ? (
           isYouTube ? (
-            <iframe
-              src={getYouTubeEmbedUrl(videoUrl)}
-              title={title}
-              className="w-full h-full scale-125 object-cover pointer-events-none"
-              allow="autoplay; encrypted-media"
-            />
+            <div className="absolute inset-0 overflow-hidden pointer-events-none flex items-center justify-center bg-stone-900">
+              <iframe
+                src={getYouTubeEmbedUrl(activeVideoUrl)}
+                title={title}
+                className="w-[180%] h-[180%] min-w-[180%] min-h-[180%] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 object-cover pointer-events-none"
+                allow="autoplay; encrypted-media"
+              />
+            </div>
           ) : (
             <video
               ref={videoRef}
-              src={videoUrl}
+              src={activeVideoUrl}
               poster={activePoster}
               autoPlay
               loop
               muted={isMuted}
               playsInline
-              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+              disablePictureInPicture
+              controlsList="nodownload nofullscreen noremoteplayback"
+              className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 pointer-events-none"
             />
           )
         ) : activePoster ? (
@@ -207,7 +210,7 @@ export const BrandVideoCard: React.FC<BrandVideoCardProps> = ({
             >
               {isYouTube ? (
                 <iframe
-                  src={getYouTubeModalUrl(videoUrl)}
+                  src={getYouTubeModalUrl(activeVideoUrl)}
                   title={title}
                   className="w-full h-full"
                   allow="autoplay; encrypted-media; picture-in-picture"
@@ -215,8 +218,8 @@ export const BrandVideoCard: React.FC<BrandVideoCardProps> = ({
                 />
               ) : (
                 <video
-                  src={videoUrl}
-                  poster={posterImage}
+                  src={activeVideoUrl}
+                  poster={activePoster}
                   controls
                   autoPlay
                   playsInline
