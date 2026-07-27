@@ -180,6 +180,7 @@ export interface AppSettings {
   telegramEnabled?: boolean;
   brandVideoEnabled?: boolean;
   brandVideoUrl?: string;
+  brandVideoMobileUrl?: string;
   brandVideoTitle?: string;
   brandVideoSubtitle?: string;
   brandVideoPoster?: string;
