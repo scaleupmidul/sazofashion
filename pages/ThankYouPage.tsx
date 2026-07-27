@@ -11,7 +11,7 @@ interface ThankYouPageProps {
 }
 
 const ThankYouPageSkeleton: React.FC = () => (
-    <main className="min-h-screen bg-[#FBFBF9] pt-32 sm:pt-48 pb-24 px-6 sm:px-12 lg:px-24">
+    <main className="min-h-screen bg-[#faf7f2] pt-32 sm:pt-48 pb-24 px-6 sm:px-12 lg:px-24">
         <div className="max-w-[1200px] mx-auto">
             <div className="flex flex-col items-center text-center mb-32 space-y-10">
                 <Skeleton className="w-20 h-20 rounded-none" />
@@ -74,7 +74,7 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ orderId }) => {
     
     if (error || !order) {
         return (
-             <main className="min-h-[90vh] bg-[#FBFBF9] flex flex-col items-center justify-center p-6 text-center">
+             <main className="min-h-[90vh] bg-[#faf7f2] flex flex-col items-center justify-center p-6 text-center">
                 <div className="w-20 h-20 bg-emerald-50 rounded-none flex items-center justify-center mb-10">
                      <ShoppingBag className="w-8 h-8 text-emerald-600/30" />
                 </div>
@@ -111,7 +111,7 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ orderId }) => {
     };
 
     return (
-      <main className="min-h-screen bg-[#FBFBF9] pt-12 sm:pt-40 pb-12 sm:pb-24 overflow-hidden selection:bg-emerald-100">
+      <main className="min-h-screen bg-[#faf7f2] pt-12 sm:pt-40 pb-12 sm:pb-24 overflow-hidden selection:bg-emerald-100">
         <motion.div 
           variants={containerVariants}
           initial="hidden"
@@ -196,7 +196,7 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ orderId }) => {
                                   key={index} 
                                   className="flex gap-8 sm:gap-12 items-center"
                                 >
-                                    <div className="w-24 sm:w-32 aspect-[3/4] bg-[#FBFBF9] rounded-none overflow-hidden border border-stone-100 group shadow-sm">
+                                    <div className="w-24 sm:w-32 aspect-[3/4] bg-[#faf7f2] rounded-none overflow-hidden border border-stone-100 group shadow-sm">
                                         <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" referrerPolicy="no-referrer" />
                                     </div>
                                     <div className="flex-1 min-w-0">
@@ -215,7 +215,7 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ orderId }) => {
 
                 {/* Right Side: Summary Card */}
                 <aside className="lg:col-span-5 space-y-10 order-1 lg:order-2">
-                    <div className="bg-white p-6 sm:p-16 rounded-none border border-stone-200/60 shadow-sm relative overflow-hidden backdrop-blur-sm">
+                    <div className="bg-white p-6 sm:p-10 lg:p-10 rounded-none border border-stone-200/60 shadow-sm relative overflow-hidden backdrop-blur-sm">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-50/40 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
                         
                         <h3 className="text-xl sm:text-2xl font-serif italic text-brand-charcoal mb-8 sm:mb-16 relative z-10">Order Summary</h3>
