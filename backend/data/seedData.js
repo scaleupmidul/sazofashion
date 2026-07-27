@@ -100,4 +100,10 @@ Welcome to SAZO. We are committed to protecting your privacy...
   exitIntentPopupEnabled: false,
   exitIntentDiscount: 50,
   exitIntentCouponCode: 'SAZO50',
+  brandVideoEnabled: true,
+  brandVideoUrl: '',
+  brandVideoTitle: 'Sazo Couture',
+  brandVideoSubtitle: 'Behind The Craft',
+  brandVideoPoster: '',
+  brandVideoMobilePoster: ''
 };
