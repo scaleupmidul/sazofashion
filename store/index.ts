@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     exitIntentCouponCode: 'SAVE60',
     freeShippingEnabled: false,
     brandVideoEnabled: true,
-    brandVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-fashion-model-posing-in-a-black-outfit-41310-large.mp4',
+    brandVideoUrl: '',
     brandVideoTitle: 'Sazo Couture',
     brandVideoSubtitle: 'Behind The Craft',
     brandVideoPoster: '',
