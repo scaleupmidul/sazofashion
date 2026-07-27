@@ -63,7 +63,7 @@ interface ImageInputProps {
 
 const ImageAssetInput: React.FC<ImageInputProps> = ({ currentImage, onImageChange, options, label, description }) => {
     const { notify } = useAppStore();
-    const [inputType, setInputType] = useState<'upload' | 'url'>('upload');
+    const [inputType, setInputType] = useState<'upload' | 'url'>('url');
     const [isProcessing, setIsProcessing] = useState(false);
     
     // Strict control: ensure we always have a string
@@ -426,7 +426,8 @@ const AdminSettingsPage: React.FC = () => {
             title: 'New Trend', 
             subtitle: 'Collection description...', 
             color: 'text-white', 
-            image: '' 
+            image: '',
+            mobileImage: '' 
         }]);
     };
 
