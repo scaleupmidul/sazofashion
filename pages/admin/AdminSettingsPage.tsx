@@ -284,6 +284,7 @@ const AdminSettingsPage: React.FC = () => {
     // Brand Video
     const [brandVideoEnabled, setBrandVideoEnabled] = useState(true);
     const [brandVideoUrl, setBrandVideoUrl] = useState('');
+    const [brandVideoMobileUrl, setBrandVideoMobileUrl] = useState('');
     const [brandVideoTitle, setBrandVideoTitle] = useState('');
     const [brandVideoSubtitle, setBrandVideoSubtitle] = useState('');
     const [brandVideoPoster, setBrandVideoPoster] = useState('');
@@ -348,6 +349,7 @@ const AdminSettingsPage: React.FC = () => {
 
             setBrandVideoEnabled(settings.brandVideoEnabled ?? true);
             setBrandVideoUrl(settings.brandVideoUrl ?? '');
+            setBrandVideoMobileUrl(settings.brandVideoMobileUrl ?? '');
             setBrandVideoTitle(settings.brandVideoTitle || 'Sazo Couture');
             setBrandVideoSubtitle(settings.brandVideoSubtitle || 'Behind The Craft');
             setBrandVideoPoster(settings.brandVideoPoster || '');
@@ -524,6 +526,7 @@ const AdminSettingsPage: React.FC = () => {
                 contactMapEmbed,
                 brandVideoEnabled,
                 brandVideoUrl,
+                brandVideoMobileUrl,
                 brandVideoTitle,
                 brandVideoSubtitle,
                 brandVideoPoster,
@@ -821,17 +824,33 @@ const AdminSettingsPage: React.FC = () => {
                                 <div className="space-y-4">
                                     <div>
                                         <label className="text-[10px] font-bold uppercase tracking-wider text-stone-600 block mb-1 font-admin">
-                                            Video URL (MP4 / WebM / YouTube)
+                                            Desktop Video URL (MP4 / WebM / YouTube)
                                         </label>
                                         <input 
                                             type="text" 
                                             value={brandVideoUrl} 
                                             onChange={e => setBrandVideoUrl(e.target.value)}
-                                            placeholder="https://example.com/video.mp4 or YouTube link"
+                                            placeholder="https://example.com/desktop-video.mp4 or YouTube link"
                                             className="w-full bg-stone-50 border border-stone-200 px-3.5 py-2 text-xs text-stone-900 rounded-none focus:outline-none focus:border-stone-900 font-admin"
                                         />
                                         <p className="text-[10px] text-stone-400 mt-1 font-admin">
-                                            Paste an MP4 video URL or YouTube URL to play automatically.
+                                            Main video link for PC / Desktop view.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block mb-1 font-admin">
+                                            Mobile Video URL (Optional Phone / Vertical Video)
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            value={brandVideoMobileUrl} 
+                                            onChange={e => setBrandVideoMobileUrl(e.target.value)}
+                                            placeholder="https://example.com/mobile-portrait.mp4 or YouTube Short"
+                                            className="w-full bg-stone-50 border border-amber-300 px-3.5 py-2 text-xs text-stone-900 rounded-none focus:outline-none focus:border-stone-900 font-admin"
+                                        />
+                                        <p className="text-[10px] text-stone-500 mt-1 font-admin">
+                                            Add a vertical/portrait video or YouTube Short for seamless mobile display without letterboxing.
                                         </p>
                                     </div>
 
