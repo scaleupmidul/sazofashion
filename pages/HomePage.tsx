@@ -380,6 +380,7 @@ const HomePage: React.FC = () => {
                 >
                   <BrandVideoCard
                     videoUrl={settings.brandVideoUrl || ''}
+                    mobileVideoUrl={settings.brandVideoMobileUrl || ''}
                     title={settings.brandVideoTitle || 'Sazo Couture'}
                     subtitle={settings.brandVideoSubtitle || 'Behind The Craft'}
                     posterImage={settings.brandVideoPoster || ''}
