@@ -98,6 +98,13 @@ const SettingsSchema = new mongoose.Schema({
   exitIntentDiscount: { type: Number, default: 60 },
   exitIntentCouponCode: { type: String, default: 'SAVE60' },
   freeShippingEnabled: { type: Boolean, default: false },
+  // Brand Video Settings
+  brandVideoEnabled: { type: Boolean, default: true },
+  brandVideoUrl: { type: String, default: '' },
+  brandVideoTitle: { type: String, default: 'Sazo Couture' },
+  brandVideoSubtitle: { type: String, default: 'Behind The Craft' },
+  brandVideoPoster: { type: String, default: '' },
+  brandVideoMobilePoster: { type: String, default: '' },
   // SMTP Configuration for order & message notifications
   smtpHost: { type: String, default: '' },
   smtpPort: { type: Number, default: 587 },
