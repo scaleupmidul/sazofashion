@@ -156,14 +156,39 @@ export const useAppStore = create<any>()(
                 if (!res.ok) throw new Error('Failed to fetch all products');
                 let allProducts: Product[] = await res.json();
                 
-                // Merge products to avoid duplicates but fill missing ones
+                // Merge products: If an existing product has MORE images (e.g. loaded via refreshProduct), preserve those images!
                 const productMap = new Map<string, Product>();
-                existingProducts.forEach(p => productMap.set(String(p.id), p));
-                allProducts.forEach(p => productMap.set(String(p.id), p));
-                
-                set({ 
-                    products: Array.from(productMap.values()), 
-                    fullProductsLoaded: true 
+                existingProducts.forEach(p => {
+                    const key = String(p.id || p.productId || (p as any)._id);
+                    if (key) productMap.set(key, p);
+                });
+
+                allProducts.forEach(p => {
+                    const key = String(p.id || p.productId || (p as any)._id);
+                    const existing = productMap.get(key);
+                    const existingImgs = existing?.images?.length || 0;
+                    const pImgs = p?.images?.length || 0;
+                    if (existing && existingImgs > pImgs) {
+                        productMap.set(key, { ...p, images: existing.images });
+                    } else {
+                        productMap.set(key, p);
+                    }
+                });
+
+                set(state => {
+                    let newSelected = state.selectedProduct;
+                    if (newSelected) {
+                        const selKey = String(newSelected.id || newSelected.productId || (newSelected as any)._id);
+                        const matchInMap = productMap.get(selKey);
+                        if (matchInMap && (matchInMap.images?.length || 0) > (newSelected.images?.length || 0)) {
+                            newSelected = matchInMap;
+                        }
+                    }
+                    return { 
+                        products: Array.from(productMap.values()), 
+                        selectedProduct: newSelected,
+                        fullProductsLoaded: true 
+                    };
                 });
             } catch (error) {
                 console.error("Failed to load all products", error);
@@ -195,10 +220,29 @@ export const useAppStore = create<any>()(
                 if (!res.ok) return;
                 const freshProduct = await res.json();
                 set(state => {
-                    const isMatch = (p: Product) => p.id === freshProduct.id || p.productId === freshProduct.productId;
-                    const updatedProducts = state.products.map(p => isMatch(p) ? freshProduct : p);
+                    const isMatch = (p: Product) => 
+                        String(p.id) === String(freshProduct.id) || 
+                        String(p.productId) === String(freshProduct.productId) ||
+                        ((p as any)._id && (freshProduct as any)._id && String((p as any)._id) === String((freshProduct as any)._id)) ||
+                        String(p.id) === String(id) ||
+                        String(p.productId) === String(id);
+
+                    const updatedProducts = state.products.map(p => isMatch(p) ? { ...p, ...freshProduct } : p);
+                    if (!updatedProducts.some(p => isMatch(p))) {
+                        updatedProducts.push(freshProduct);
+                    }
+
                     let newSelected = state.selectedProduct;
-                    if (!newSelected || isMatch(newSelected)) newSelected = freshProduct;
+                    const isSelectedMatch = !newSelected || 
+                        String(newSelected.id) === String(freshProduct.id) || 
+                        String(newSelected.productId) === String(freshProduct.productId) ||
+                        ((newSelected as any)._id && (freshProduct as any)._id && String((newSelected as any)._id) === String((freshProduct as any)._id)) ||
+                        String(newSelected.id) === String(id) ||
+                        String(newSelected.productId) === String(id);
+
+                    if (isSelectedMatch) {
+                        newSelected = freshProduct;
+                    }
                     return { products: updatedProducts, selectedProduct: newSelected };
                 });
             } catch (e) {
