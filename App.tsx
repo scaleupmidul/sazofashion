@@ -88,9 +88,27 @@ const App: React.FC = () => {
     const productMatch = path.match(/^\/product\/(.+)$/);
     if (productMatch) {
         const urlId = productMatch[1].split('?')[0];
-        const productFromList = products.find(p => p.productId === urlId || p.id === urlId);
-        if (productFromList && selectedProduct !== productFromList) {
-            setSelectedProduct(productFromList);
+        
+        // Check if currently selected product matches the URL
+        const isCurrentMatch = selectedProduct && (
+            selectedProduct.productId === urlId || 
+            selectedProduct.id === urlId || 
+            (selectedProduct._id && String(selectedProduct._id) === urlId)
+        );
+
+        const productFromList = products.find(p => p.productId === urlId || p.id === urlId || (p._id && String(p._id) === urlId));
+
+        if (!isCurrentMatch) {
+            if (productFromList) {
+                setSelectedProduct(productFromList);
+            }
+        } else if (selectedProduct && productFromList) {
+            // Only replace selectedProduct if productFromList has strictly MORE images
+            const listImgCount = productFromList.images ? productFromList.images.length : 0;
+            const currentImgCount = selectedProduct.images ? selectedProduct.images.length : 0;
+            if (listImgCount > currentImgCount) {
+                setSelectedProduct(productFromList);
+            }
         }
     } else {
         if (selectedProduct !== null) {
