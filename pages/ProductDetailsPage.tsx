@@ -189,6 +189,12 @@ const ProductParallaxGallery: React.FC<{
     const prevIndexRef = useRef(currentIndex);
 
     useEffect(() => {
+        if (currentIndex >= images.length && images.length > 0) {
+            setCurrentImageIndex(0);
+        }
+    }, [images.length, currentIndex, setCurrentImageIndex]);
+
+    useEffect(() => {
         const prev = prevIndexRef.current;
         if (prev !== currentIndex && images.length > 0) {
             let dir = 1;
@@ -215,7 +221,7 @@ const ProductParallaxGallery: React.FC<{
         }, 4500);
         
         return () => clearInterval(interval);
-    }, [images, currentIndex, setCurrentImageIndex]);
+    }, [images.length, setCurrentImageIndex]);
 
     const handleDragEnd = (_event: any, info: any) => {
         if (images.length <= 1) return;
@@ -244,6 +250,8 @@ const ProductParallaxGallery: React.FC<{
         })
     };
 
+    const safeIndex = (currentIndex >= 0 && currentIndex < images.length) ? currentIndex : 0;
+
     return (
         <div ref={ref} className="relative aspect-[3/4] overflow-hidden bg-[#f3f0ea] select-none touch-pan-y rounded-sm group">
             {/* Elegant Shimmer Background */}
@@ -256,7 +264,7 @@ const ProductParallaxGallery: React.FC<{
                 <div className="relative w-full h-full overflow-hidden">
                     <AnimatePresence initial={false} custom={direction}>
                         <motion.div
-                            key={`${images[currentIndex]}-${currentIndex}`}
+                            key={`${images[safeIndex]}-${safeIndex}`}
                             custom={direction}
                             variants={slideVariants}
                             initial="enter"
@@ -272,10 +280,10 @@ const ProductParallaxGallery: React.FC<{
                             className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing will-change-transform"
                         >
                             <img 
-                                src={images[currentIndex]} 
+                                src={images[safeIndex]} 
                                 className="w-full h-full object-cover pointer-events-none select-none" 
                                 referrerPolicy="no-referrer"
-                                alt={`Product image ${currentIndex + 1}`}
+                                alt={`Product image ${safeIndex + 1}`}
                             />
                         </motion.div>
                     </AnimatePresence>
@@ -294,7 +302,7 @@ const ProductParallaxGallery: React.FC<{
                             key={i}
                             type="button"
                             onClick={() => setCurrentImageIndex(i)}
-                            className={`h-1.5 rounded-full transition-all duration-500 ease-out ${currentIndex === i ? 'bg-white w-5' : 'bg-white/40 w-1.5 hover:bg-white/80'}`}
+                            className={`h-1.5 rounded-full transition-all duration-500 ease-out ${safeIndex === i ? 'bg-white w-5' : 'bg-white/40 w-1.5 hover:bg-white/80'}`}
                             aria-label={`Go to slide ${i + 1}`}
                         />
                     ))}
@@ -305,13 +313,14 @@ const ProductParallaxGallery: React.FC<{
 };
 
 const ProductDetailsPage: React.FC = () => {
-  const { product, navigate, addToCart, notify, loading, refreshProduct } = useAppStore(state => ({
+  const { product, navigate, addToCart, notify, loading, refreshProduct, path } = useAppStore(state => ({
     product: state.selectedProduct,
     navigate: state.navigate,
     addToCart: state.addToCart,
     notify: state.notify,
     loading: state.loading,
-    refreshProduct: state.refreshProduct
+    refreshProduct: state.refreshProduct,
+    path: state.path
   }));
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -325,10 +334,12 @@ const ProductDetailsPage: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchProductData = async () => {
-        const pathParts = window.location.pathname.split('/');
-        const pathId = pathParts[pathParts.length - 1];
+        const pathParts = path.split('/');
+        const rawId = pathParts[pathParts.length - 1];
+        const pathId = rawId ? rawId.split('?')[0] : '';
         
         if (pathId && pathId !== 'product') {
+             setIsFetching(true);
              await refreshProduct(pathId);
         }
         if (isMounted) setIsFetching(false);
@@ -336,7 +347,7 @@ const ProductDetailsPage: React.FC = () => {
 
     fetchProductData();
     return () => { isMounted = false; };
-  }, [refreshProduct]);
+  }, [path, refreshProduct]);
 
   const images = useMemo(() => {
     if (!product || !product.images) return [];
