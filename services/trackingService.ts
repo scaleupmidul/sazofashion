@@ -121,25 +121,62 @@ const getCookie = (name: string): string | null => {
   return match ? decodeURIComponent(match[2]) : null;
 };
 
+const getOrCreateClientId = (): string => {
+  if (typeof window === 'undefined') return '';
+  let cid = '';
+  try {
+    cid = localStorage.getItem('sazo_client_id') || '';
+    if (!cid) {
+      cid = `sazo_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+      localStorage.setItem('sazo_client_id', cid);
+    }
+  } catch (e) {
+    cid = `sazo_${Date.now()}`;
+  }
+  return cid;
+};
+
+const getOrCreateFbp = (): string => {
+  if (typeof window === 'undefined') return '';
+  let fbp = getCookie('_fbp') || getCookie('fbp');
+  if (!fbp) {
+    try {
+      fbp = localStorage.getItem('_fbp');
+    } catch (e) {}
+  }
+  if (!fbp) {
+    fbp = `fb.1.${Date.now()}.${Math.floor(1000000000 + Math.random() * 9000000000)}`;
+    try {
+      document.cookie = `_fbp=${fbp};path=/;max-age=7776000;SameSite=Lax`;
+      localStorage.setItem('_fbp', fbp);
+    } catch (e) {}
+  }
+  return fbp;
+};
+
 export const sendServerEvent = async (eventName: string, eventData: any, userData?: any, eventId?: string) => {
   if (typeof window === 'undefined') return;
   try {
-    const fbp = getCookie('_fbp') || getCookie('fbp');
-    const fbc = getCookie('_fbc') || getCookie('fbc');
+    const fbp = getOrCreateFbp();
+    const fbc = getCookie('_fbc') || getCookie('fbc') || undefined;
+    const clientId = getOrCreateClientId();
+    const currentUrl = window.location.href;
 
     const payload = {
       eventName,
+      gaClientId: clientId,
       params: {
         ...eventData,
         event_id: eventId,
-        event_source_url: window.location.href,
+        event_source_url: currentUrl,
       },
       userData: {
         ...userData,
+        external_id: clientId || userData?.external_id,
         fbp: fbp || userData?.fbp,
         fbc: fbc || userData?.fbc,
       },
-      url: window.location.href,
+      url: currentUrl,
     };
 
     if (typeof fetch !== 'undefined') {
@@ -212,8 +249,8 @@ export const trackViewContent = (product: Product) => {
   const productId = String(product.productId || product.id || (product as any)._id);
   const now = Date.now();
 
-  // Prevent double-firing view_item within 4 seconds for the same product
-  if (lastTrackedViewProduct.id === productId && (now - lastTrackedViewProduct.timestamp) < 4000) {
+  // Prevent double-firing view_item within 1.5 seconds for the same product
+  if (lastTrackedViewProduct.id === productId && (now - lastTrackedViewProduct.timestamp) < 1500) {
     return;
   }
   lastTrackedViewProduct = { id: productId, timestamp: now };
@@ -316,6 +353,7 @@ export const trackAddToCart = (product: Product, size?: string, color?: string, 
   const totalValue = unitPrice * quantity;
   const productId = String(product.productId || product.id || (product as any)._id);
   const eventId = generateEventId('AddToCart');
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   const fbParams = {
     content_name: product.name,
@@ -325,6 +363,7 @@ export const trackAddToCart = (product: Product, size?: string, color?: string, 
     value: totalValue,
     currency: 'BDT',
     contents: [{ id: productId, quantity: quantity, item_price: unitPrice }],
+    event_source_url: currentUrl,
   };
 
   pushToDataLayer({
@@ -368,6 +407,7 @@ export const trackInitiateCheckout = (cartItems: any[], totalAmount: number) => 
     quantity: item.quantity || 1,
     item_price: Number(item.product?.discountPrice || item.product?.price || item.price || 0),
   }));
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   const fbParams = {
     content_type: 'product',
@@ -376,6 +416,7 @@ export const trackInitiateCheckout = (cartItems: any[], totalAmount: number) => 
     value: Number(totalAmount),
     currency: 'BDT',
     num_items: cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0),
+    event_source_url: currentUrl,
   };
 
   pushToDataLayer({
