@@ -374,6 +374,21 @@ export const trackInitiateCheckout = (cartItems: any[], totalAmount: number) => 
   sendServerEvent('InitiateCheckout', fbParams, undefined, eventId);
 };
 
+// Tracked purchase orders guard for deduplication
+const trackedPurchaseOrders = new Set<string>();
+
+const extractProductId = (item: any): string => {
+  if (!item) return '';
+  return String(
+    item.productId || 
+    item.id || 
+    item.product?.productId || 
+    item.product?.id || 
+    item.product?._id || 
+    ''
+  ).trim();
+};
+
 // --- 7. PURCHASE ---
 export const trackPurchase = (
   orderId: string, 
@@ -387,28 +402,42 @@ export const trackPurchase = (
     address?: string;
   }
 ) => {
-  if (!cartItems || cartItems.length === 0) return;
+  if (!orderId || !cartItems || cartItems.length === 0) return;
+
+  const cleanOrderId = String(orderId).trim();
+  const sessionKey = `tracked_purchase_${cleanOrderId}`;
+
+  if (typeof window !== 'undefined') {
+    if (trackedPurchaseOrders.has(cleanOrderId) || sessionStorage.getItem(sessionKey)) {
+      console.log(`[Tracking] Purchase event for order ${cleanOrderId} already tracked. Skipping.`);
+      return;
+    }
+    trackedPurchaseOrders.add(cleanOrderId);
+    try {
+      sessionStorage.setItem(sessionKey, 'true');
+    } catch (e) {}
+  }
 
   const eventId = generateEventId('Purchase');
-  const contentIds = cartItems.map(item => String(item.product?.productId || item.product?.id || item.product?._id || item.productId || item.id));
+  const contentIds = cartItems.map(item => extractProductId(item)).filter(Boolean);
   const contents = cartItems.map(item => ({
-    id: String(item.product?.productId || item.product?.id || item.product?._id || item.productId || item.id),
-    quantity: item.quantity || 1,
-    item_price: Number(item.product?.discountPrice || item.product?.price || item.price || 0),
+    id: extractProductId(item),
+    quantity: Number(item.quantity || 1),
+    item_price: Number(item.price || item.product?.discountPrice || item.product?.price || 0),
   }));
 
   const totalQty = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
   const fbParams = {
-    content_name: cartItems.map(i => i.product?.name || i.name || 'Product').join(', '),
-    content_category: cartItems[0]?.product?.category || cartItems[0]?.category || 'Fashion',
+    content_name: cartItems.map(i => i.name || i.product?.name || 'Product').join(', '),
+    content_category: cartItems[0]?.category || cartItems[0]?.product?.category || 'Fashion',
     content_type: 'product',
-    content_ids: contentIds,
+    content_ids: contentIds.length > 0 ? contentIds : ['product'],
     contents: contents,
     value: Number(totalAmount),
     currency: 'BDT',
     num_items: totalQty,
-    order_id: String(orderId),
+    order_id: cleanOrderId,
   };
 
   const fullNameStr = (userData?.fullName || '').trim();
