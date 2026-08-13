@@ -243,22 +243,15 @@ const CheckoutPage: React.FC = () => {
     transactionId: '',
   });
 
-  const safeCartTotal = useMemo(() => {
-    if (Number.isFinite(cartTotal) && cartTotal > 0) return cartTotal;
-    if (cart && cart.length > 0) {
-      return cart.reduce((sum, item) => sum + (Number(item.price || item.product?.price || 0) * (item.quantity || 1)), 0);
-    }
-    return 0;
-  }, [cart, cartTotal]);
-
-  const trackedCheckoutRef = useRef(false);
+  const safeCartTotal = (Number.isFinite(cartTotal) && cartTotal > 0)
+    ? cartTotal 
+    : (cart || []).reduce((acc, item) => acc + (Number(item.price || 0) * (item.quantity || 1)), 0);
 
   useEffect(() => {
-    if (cart && cart.length > 0 && !trackedCheckoutRef.current) {
-      trackedCheckoutRef.current = true;
+    if (!loading && cart && cart.length > 0) {
       trackInitiateCheckout(cart, safeCartTotal);
     }
-  }, [cart, safeCartTotal]);
+  }, [loading, cart, safeCartTotal]);
 
   useEffect(() => {
     if (!loading && (!cart || cart.length === 0) && !isSubmittingRef.current) {
