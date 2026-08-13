@@ -2,6 +2,7 @@ import express from 'express';
 import Settings from '../models/Settings.js';
 import { protect } from '../middleware/authMiddleware.js';
 import bcrypt from 'bcryptjs';
+import { invalidateTrackingSettingsCache } from './tracking.js';
 
 const router = express.Router();
 
@@ -85,6 +86,7 @@ router.put('/', protect, async (req, res) => {
       }
 
       const updatedSettings = await settings.save();
+      invalidateTrackingSettingsCache();
       const settingsObj = updatedSettings.toObject();
       delete settingsObj.adminPassword;
       delete settingsObj._id;
