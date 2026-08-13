@@ -244,12 +244,14 @@ const CheckoutPage: React.FC = () => {
   });
 
   const safeCartTotal = Number.isFinite(cartTotal) ? cartTotal : 0;
+  const trackedCheckoutRef = useRef(false);
 
   useEffect(() => {
-    if (!loading && cart && cart.length > 0) {
+    if (!loading && cart && cart.length > 0 && !trackedCheckoutRef.current) {
+      trackedCheckoutRef.current = true;
       trackInitiateCheckout(cart, safeCartTotal);
     }
-  }, [loading]);
+  }, [loading, cart, safeCartTotal]);
 
   useEffect(() => {
     if (!loading && (!cart || cart.length === 0) && !isSubmittingRef.current) {
