@@ -363,15 +363,21 @@ const ProductDetailsPage: React.FC = () => {
     }
   }, [product, sizes]);
 
+  const trackedPathRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (product) {
         setCurrentImageIndex(0);
         window.scrollTo(0, 0); 
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
-        trackViewContent(product);
+        
+        if (trackedPathRef.current !== path) {
+            trackedPathRef.current = path;
+            trackViewContent(product);
+        }
     }
-  }, [product]);
+  }, [product, path]);
 
   const validateSelection = () => {
       if (isOutOfStock) return false;
