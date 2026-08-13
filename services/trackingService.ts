@@ -45,6 +45,7 @@ export const initTrackingScripts = (settings: any) => {
 
     try {
       if (window.fbq) {
+        window.fbq('set', 'autoConfig', false, pixelId);
         window.fbq('init', pixelId);
         window.fbq('track', 'PageView');
       }
