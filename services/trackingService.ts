@@ -218,6 +218,8 @@ export const sendServerEvent = async (eventName: string, eventData: any, userDat
     const currentUrl = window.location.href;
     const testEventCode = getActiveTestEventCode();
 
+    const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
+
     const payload = {
       eventName,
       gaClientId: clientId,
@@ -231,6 +233,7 @@ export const sendServerEvent = async (eventName: string, eventData: any, userDat
       },
       userData: {
         ...userData,
+        userAgent: userAgent || userData?.userAgent,
         external_id: clientId || userData?.external_id,
         fbp: fbp || userData?.fbp,
         fbc: fbc || userData?.fbc,
