@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useAppStore } from '../store';
 import { LoaderCircle, ChevronDown, Check, ShieldCheck, Lock, ShoppingBag, Search, MapPin, X } from 'lucide-react';
-import { trackServerEvent } from '../services/trackingService';
+import { trackServerEvent, trackInitiateCheckout, trackPurchase } from '../services/trackingService';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton, Shimmer, TextSkeleton } from '../components/Skeleton';
 
@@ -246,6 +246,12 @@ const CheckoutPage: React.FC = () => {
   const safeCartTotal = Number.isFinite(cartTotal) ? cartTotal : 0;
 
   useEffect(() => {
+    if (!loading && cart && cart.length > 0) {
+      trackInitiateCheckout(cart, safeCartTotal);
+    }
+  }, [loading]);
+
+  useEffect(() => {
     if (!loading && (!cart || cart.length === 0) && !isSubmittingRef.current) {
       navigate('/shop');
     }
@@ -380,6 +386,12 @@ const CheckoutPage: React.FC = () => {
     
         const orderId = newOrder.orderId || newOrder.id;
         if (orderId) {
+            trackPurchase(orderId, cartForOrder, totalPayable, {
+              email: formData.email,
+              phone: formData.phone,
+              fullName: formData.fullName,
+              city: formData.city,
+            });
             clearCart();
             navigate(`/thank-you/${orderId}`);
         }
