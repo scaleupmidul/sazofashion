@@ -314,8 +314,9 @@ const ProductParallaxGallery: React.FC<{
 };
 
 const ProductDetailsPage: React.FC = () => {
-  const { product, navigate, addToCart, notify, loading, refreshProduct, path } = useAppStore(state => ({
-    product: state.selectedProduct,
+  const { products, selectedProduct, navigate, addToCart, notify, loading, refreshProduct, path } = useAppStore(state => ({
+    products: state.products,
+    selectedProduct: state.selectedProduct,
     navigate: state.navigate,
     addToCart: state.addToCart,
     notify: state.notify,
@@ -323,6 +324,23 @@ const ProductDetailsPage: React.FC = () => {
     refreshProduct: state.refreshProduct,
     path: state.path
   }));
+
+  const pathParts = path.split('/');
+  const rawId = pathParts[pathParts.length - 1];
+  const pathId = rawId ? rawId.split('?')[0] : '';
+
+  // Resolve matching product immediately from cached store products if present, or fallback to selectedProduct
+  const product = useMemo(() => {
+    if (pathId && pathId !== 'product') {
+      const match = products.find((p: Product) => 
+        String(p.id) === pathId || 
+        String(p.productId) === pathId || 
+        String((p as any)._id) === pathId
+      );
+      if (match) return match;
+    }
+    return selectedProduct;
+  }, [products, selectedProduct, pathId]);
 
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -335,10 +353,6 @@ const ProductDetailsPage: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchProductData = async () => {
-        const pathParts = path.split('/');
-        const rawId = pathParts[pathParts.length - 1];
-        const pathId = rawId ? rawId.split('?')[0] : '';
-        
         if (pathId && pathId !== 'product') {
              setIsFetching(true);
              await refreshProduct(pathId);
@@ -348,7 +362,7 @@ const ProductDetailsPage: React.FC = () => {
 
     fetchProductData();
     return () => { isMounted = false; };
-  }, [path, refreshProduct]);
+  }, [pathId, refreshProduct]);
 
   const images = useMemo(() => {
     if (!product || !product.images) return [];
@@ -363,7 +377,7 @@ const ProductDetailsPage: React.FC = () => {
     }
   }, [product, sizes]);
 
-  const trackedPathRef = useRef<string | null>(null);
+  const trackedProductRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (product) {
@@ -372,12 +386,13 @@ const ProductDetailsPage: React.FC = () => {
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
         
-        if (trackedPathRef.current !== path) {
-            trackedPathRef.current = path;
+        const currentProdKey = `${pathId || ''}_${product.id || product.productId || (product as any)._id}`;
+        if (trackedProductRef.current !== currentProdKey) {
+            trackedProductRef.current = currentProdKey;
             trackViewContent(product);
         }
     }
-  }, [product, path]);
+  }, [product, pathId]);
 
   const validateSelection = () => {
       if (isOutOfStock) return false;
