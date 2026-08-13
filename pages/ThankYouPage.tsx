@@ -5,6 +5,7 @@ import { CheckCircle, ShoppingBag, ArrowRight, Copy, Printer, MapPin, CreditCard
 import { Order } from '../types';
 import { motion } from 'motion/react';
 import { Skeleton, Shimmer } from '../components/Skeleton';
+import { trackPurchase } from '../services/trackingService';
 
 interface ThankYouPageProps {
   orderId: string;
@@ -63,6 +64,25 @@ const ThankYouPage: React.FC<ThankYouPageProps> = ({ orderId }) => {
         
         fetchOrder();
     }, [orderId]);
+
+    useEffect(() => {
+        if (order) {
+            const displayId = String(order.orderId || order.id || orderId);
+            const fullName = `${order.firstName || ''} ${order.lastName || ''}`.trim();
+            trackPurchase(
+                displayId,
+                order.cartItems || [],
+                order.total || 0,
+                {
+                    email: order.email || '',
+                    phone: order.phone || '',
+                    fullName: fullName || order.firstName || '',
+                    city: order.city || '',
+                    address: order.address || '',
+                }
+            );
+        }
+    }, [order, orderId]);
 
     const handleCopyOrderId = () => {
         const displayId = order?.orderId || order?.id || '';
