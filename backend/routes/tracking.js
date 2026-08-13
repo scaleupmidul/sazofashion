@@ -12,7 +12,7 @@ let lastSettingsFetch = 0;
 
 const getCachedSettings = async () => {
     const now = Date.now();
-    if (cachedSettings && (now - lastSettingsFetch) < 30000) {
+    if (cachedSettings && (now - lastSettingsFetch) < 30000 && cachedSettings.fbAccessToken) {
         return cachedSettings;
     }
     if (mongoose.connection.readyState === 1) {
