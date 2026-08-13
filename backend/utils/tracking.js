@@ -105,23 +105,24 @@ export const trackMetaCAPI = async (eventName, params, userData = {}, config = {
             user_data,
             custom_data: {
                 currency: params.currency || 'BDT',
-                value: params.value || 0,
-                content_ids: params.content_ids || params.items?.map(i => i.id || i.sku) || [],
+                value: typeof params.value !== 'undefined' ? Number(params.value) : 0,
+                content_ids: params.content_ids || (params.items ? params.items.map(i => String(i.id || i.sku || i.productId)) : []),
                 content_type: params.content_type || 'product',
                 content_name: params.content_name || params['x-fb-cd-content_name'] || '',
-                num_items: params.num_items || params['x-fb-cd-num_items'] || 1,
+                content_category: params.content_category || '',
+                num_items: params.num_items || (params.contents ? params.contents.reduce((acc, c) => acc + (Number(c.quantity) || 1), 0) : 1),
                 shipping: params.shipping || 0,
-                contents: params.items ? params.items.map(item => ({
-                    id: item.id || item.sku,
-                    quantity: item.quantity,
-                    price: item.price
-                })) : []
+                contents: params.contents || (params.items ? params.items.map(item => ({
+                    id: String(item.id || item.sku || item.productId),
+                    quantity: Number(item.quantity || 1),
+                    item_price: Number(item.price || item.item_price || 0)
+                })) : [])
             }
         }],
-        test_event_code: config.fbTestCode || null
+        ...(config.fbTestCode && String(config.fbTestCode).trim() ? { test_event_code: String(config.fbTestCode).trim() } : {})
     };
 
-    if (config.fbTestCode) {
+    if (config.fbTestCode && String(config.fbTestCode).trim()) {
         console.log(`🔍 Meta CAPI Debug: ${eventName} (ID: ${payload.data[0].event_id}) using Test Code: ${config.fbTestCode}`);
     }
 
