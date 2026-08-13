@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Product } from '../types';
+import { trackViewContent } from '../services/trackingService';
 import { ShoppingCart, ChevronLeft, ChevronRight, Share2, Plus, Minus, ChevronDown, Truck, ShieldCheck, CreditCard, RefreshCw, X, Ruler, Info } from 'lucide-react';
 import { useAppStore } from '../store';
 import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react';
@@ -368,6 +369,7 @@ const ProductDetailsPage: React.FC = () => {
         window.scrollTo(0, 0); 
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
+        trackViewContent(product);
     }
   }, [product]);
 
