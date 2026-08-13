@@ -39,20 +39,7 @@ router.post('/event', async (req, res) => {
         const { eventName, params = {}, userData = {}, gaClientId, pixelId } = req.body;
         const settings = await getCachedSettings();
 
-        // Immediate 200 response to prevent client hang
-        res.status(200).json({ status: 'sent' });
-
-        // 1. GA4 Tracking
-        const effectiveGaId = settings?.gaMeasurementId || process.env.GA4_MEASUREMENT_ID;
-        const effectiveGaSecret = settings?.gaApiSecret || process.env.GA4_API_SECRET;
-        if (effectiveGaId && effectiveGaSecret) {
-            trackGA4Event(eventName, params, gaClientId, {
-                gaMeasurementId: effectiveGaId,
-                gaApiSecret: effectiveGaSecret
-            }).catch(e => console.log("GA4 Error:", e.message));
-        }
-
-        // 2. Meta CAPI
+        // 1. Meta CAPI Credentials & Data Extraction
         const cookieFbc = req.cookies?._fbc || req.cookies?.fbc || null;
         const cookieFbp = req.cookies?._fbp || req.cookies?.fbp || null;
         const cookieTestCode = req.cookies?.fb_test_code || null;
@@ -75,18 +62,44 @@ router.post('/event', async (req, res) => {
         const effectivePixelId = (settings?.fbPixelId || pixelId || process.env.FB_PIXEL_ID || '').trim();
         const effectiveAccessToken = (settings?.fbAccessToken || process.env.FB_ACCESS_TOKEN || '').trim();
 
-        trackMetaCAPI(eventName, params, {
-            ...userData,
-            external_id: effectiveExternalId,
-            ip,
-            userAgent,
-            fbc: effectiveFbc,
-            fbp: effectiveFbp
-        }, {
-            fbPixelId: effectivePixelId,
-            fbAccessToken: effectiveAccessToken,
-            fbTestCode: testCode || undefined
-        }).catch(e => console.log("Meta CAPI Error:", e.message));
+        // 2. GA4 Credentials
+        const effectiveGaId = settings?.gaMeasurementId || process.env.GA4_MEASUREMENT_ID;
+        const effectiveGaSecret = settings?.gaApiSecret || process.env.GA4_API_SECRET;
+
+        // Await all tracking promises to prevent serverless runtime from freezing or aborting the HTTP connection
+        const tasks = [];
+
+        if (effectivePixelId && effectiveAccessToken) {
+            tasks.push(
+                trackMetaCAPI(eventName, params, {
+                    ...userData,
+                    external_id: effectiveExternalId,
+                    ip,
+                    userAgent,
+                    fbc: effectiveFbc,
+                    fbp: effectiveFbp
+                }, {
+                    fbPixelId: effectivePixelId,
+                    fbAccessToken: effectiveAccessToken,
+                    fbTestCode: testCode || undefined
+                }).catch(e => console.error('[Meta CAPI Error]:', e.message))
+            );
+        } else {
+            console.warn(`[Meta CAPI Skipped] Missing Pixel ID or Access Token for ${eventName}`);
+        }
+
+        if (effectiveGaId && effectiveGaSecret) {
+            tasks.push(
+                trackGA4Event(eventName, params, gaClientId, {
+                    gaMeasurementId: effectiveGaId,
+                    gaApiSecret: effectiveGaSecret
+                }).catch(e => console.error('[GA4 Error]:', e.message))
+            );
+        }
+
+        await Promise.allSettled(tasks);
+
+        res.status(200).json({ status: 'sent', event: eventName });
 
     } catch (error) {
         console.error('[Tracking Route] Error:', error.message);
