@@ -6,13 +6,18 @@ import Settings from '../models/Settings.js';
 
 const router = express.Router();
 
-// In-memory cache for settings with 30s TTL
+// In-memory cache for settings with 15s TTL
 let cachedSettings = null;
 let lastSettingsFetch = 0;
 
+export const invalidateTrackingSettingsCache = () => {
+    cachedSettings = null;
+    lastSettingsFetch = 0;
+};
+
 const getCachedSettings = async () => {
     const now = Date.now();
-    if (cachedSettings && (now - lastSettingsFetch) < 30000 && cachedSettings.fbAccessToken) {
+    if (cachedSettings && (now - lastSettingsFetch) < 15000 && cachedSettings.fbAccessToken) {
         return cachedSettings;
     }
     if (mongoose.connection.readyState === 1) {
