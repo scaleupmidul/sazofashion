@@ -45,10 +45,22 @@ const normalizeCountry = (country) => {
     return hashData('bd');
 };
 
+const sanitizeIp = (rawIp) => {
+    if (!rawIp || typeof rawIp !== 'string') return null;
+    let ip = rawIp.split(',')[0].trim();
+    if (ip.startsWith('::ffff:')) {
+        ip = ip.substring(7);
+    }
+    if (ip === '::1' || ip === '127.0.0.1' || ip === 'localhost' || !ip) {
+        return null;
+    }
+    return ip;
+};
+
 /**
  * Meta Conversions API (CAPI) Integration
  */
-export const trackMetaCAPI = async (eventName, params, userData = {}, config = {}) => {
+export const trackMetaCAPI = async (eventName, params = {}, userData = {}, config = {}) => {
     const pixel_id = config.fbPixelId || process.env.FB_PIXEL_ID;
     const access_token = config.fbAccessToken || process.env.FB_ACCESS_TOKEN;
 
@@ -78,12 +90,18 @@ export const trackMetaCAPI = async (eventName, params, userData = {}, config = {
     const hashedPhone = normalizePhone(rawPhone);
     const hashedCountry = normalizeCountry(rawCountry);
 
-    const user_data = {
-        client_ip_address: userData.ip || null,
-        client_user_agent: userData.userAgent || null,
-        fbc: userData.fbc || params['x-fb-ck-fbc'] || null,
-        fbp: userData.fbp || params['x-fb-ck-fbp'] || null,
-    };
+    const user_data = {};
+    const cleanIp = sanitizeIp(userData.ip);
+    if (cleanIp) user_data.client_ip_address = cleanIp;
+
+    if (userData.userAgent && typeof userData.userAgent === 'string' && userData.userAgent.trim()) {
+        user_data.client_user_agent = userData.userAgent.trim();
+    }
+
+    const effectiveFbc = userData.fbc || params['x-fb-ck-fbc'] || null;
+    const effectiveFbp = userData.fbp || params['x-fb-ck-fbp'] || null;
+    if (effectiveFbc) user_data.fbc = effectiveFbc;
+    if (effectiveFbp) user_data.fbp = effectiveFbp;
 
     if (rawEmail) user_data.em = wrapHash(rawEmail);
     if (hashedPhone) user_data.ph = [hashedPhone];
@@ -95,6 +113,54 @@ export const trackMetaCAPI = async (eventName, params, userData = {}, config = {
     if (hashedCountry) user_data.country = [hashedCountry];
     if (rawExternalId) user_data.external_id = wrapHash(rawExternalId);
 
+    // Build custom_data based on event type
+    const custom_data = {};
+    const isEcomEvent = ['Purchase', 'AddToCart', 'ViewContent', 'InitiateCheckout'].includes(eventName);
+
+    if (isEcomEvent) {
+        custom_data.currency = params.currency || 'BDT';
+        if (typeof params.value !== 'undefined' && params.value !== null) {
+            custom_data.value = Number(params.value);
+        }
+        custom_data.content_type = params.content_type || 'product';
+        if (params.content_name) custom_data.content_name = params.content_name;
+        if (params.content_category) custom_data.content_category = params.content_category;
+
+        if (params.content_ids && Array.isArray(params.content_ids) && params.content_ids.length > 0) {
+            custom_data.content_ids = params.content_ids.map(String);
+        } else if (params.items && Array.isArray(params.items) && params.items.length > 0) {
+            custom_data.content_ids = params.items.map(i => String(i.item_id || i.id || i.sku || i.productId));
+        }
+
+        if (params.contents && Array.isArray(params.contents) && params.contents.length > 0) {
+            custom_data.contents = params.contents.map(item => ({
+                id: String(item.id || item.productId || item.item_id),
+                quantity: Number(item.quantity || 1),
+                item_price: Number(item.item_price || item.price || 0)
+            }));
+        } else if (params.items && Array.isArray(params.items) && params.items.length > 0) {
+            custom_data.contents = params.items.map(item => ({
+                id: String(item.item_id || item.id || item.productId),
+                quantity: Number(item.quantity || 1),
+                item_price: Number(item.price || item.item_price || 0)
+            }));
+        }
+
+        if (params.num_items) {
+            custom_data.num_items = Number(params.num_items);
+        } else if (custom_data.contents && custom_data.contents.length > 0) {
+            custom_data.num_items = custom_data.contents.reduce((acc, c) => acc + (Number(c.quantity) || 1), 0);
+        }
+
+        if (eventName === 'Purchase' && params.shipping) {
+            custom_data.shipping = Number(params.shipping);
+        }
+    } else if (eventName === 'Search' && params.search_string) {
+        custom_data.search_string = params.search_string;
+    } else if (eventName === 'ViewCategory' && params.content_category) {
+        custom_data.content_category = params.content_category;
+    }
+
     const payload = {
         data: [{
             event_name: eventName,
@@ -103,21 +169,7 @@ export const trackMetaCAPI = async (eventName, params, userData = {}, config = {
             event_id: params.event_id || params.transaction_id || `evt_${Date.now()}`,
             event_source_url: params.event_source_url || '',
             user_data,
-            custom_data: {
-                currency: params.currency || 'BDT',
-                value: typeof params.value !== 'undefined' ? Number(params.value) : 0,
-                content_ids: params.content_ids || (params.items ? params.items.map(i => String(i.id || i.sku || i.productId)) : []),
-                content_type: params.content_type || 'product',
-                content_name: params.content_name || params['x-fb-cd-content_name'] || '',
-                content_category: params.content_category || '',
-                num_items: params.num_items || (params.contents ? params.contents.reduce((acc, c) => acc + (Number(c.quantity) || 1), 0) : 1),
-                shipping: params.shipping || 0,
-                contents: params.contents || (params.items ? params.items.map(item => ({
-                    id: String(item.id || item.sku || item.productId),
-                    quantity: Number(item.quantity || 1),
-                    item_price: Number(item.price || item.item_price || 0)
-                })) : [])
-            }
+            ...(Object.keys(custom_data).length > 0 ? { custom_data } : {})
         }],
         ...(config.fbTestCode && String(config.fbTestCode).trim() ? { test_event_code: String(config.fbTestCode).trim() } : {})
     };
