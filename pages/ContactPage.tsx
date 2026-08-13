@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, Instagram, Facebook, Music2 as Tiktok } from 'lucide-react';
 import { useAppStore } from '../store';
+import { trackContact } from '../services/trackingService';
 import { motion } from 'motion/react';
 import { Skeleton, Shimmer } from '../components/Skeleton';
 
@@ -47,6 +48,7 @@ const ContactPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       await addContactMessage(formData);
+      trackContact(formData);
       notify('Thank you for reaching out. We will contact you shortly.', 'success');
       setFormData({ name: '', email: '', message: '' });
     } catch (error) {
