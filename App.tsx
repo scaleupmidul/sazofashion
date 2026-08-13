@@ -4,6 +4,7 @@
 import React, { useEffect, Suspense } from 'react';
 import { useAppStore } from './store';
 import Header from './components/Header';
+import { initTrackingScripts, trackPageView } from './services/trackingService';
 import Footer from './components/Footer';
 import Notification from './components/Notification';
 import WhatsAppButton from './components/WhatsAppButton';
@@ -52,8 +53,17 @@ const App: React.FC = () => {
   const notification = useAppStore(state => state.notification);
   const isAdminAuthenticated = useAppStore(state => state.isAdminAuthenticated);
   const showWhatsAppButton = useAppStore(state => state.settings.showWhatsAppButton);
-  const gtmId = useAppStore(state => state.settings.gtmId);
+  const settings = useAppStore(state => state.settings);
+  const loadInitialData = useAppStore(state => state.loadInitialData);
+  const fetchSettings = useAppStore(state => state.fetchSettings);
+  const fetchProducts = useAppStore(state => state.fetchProducts);
   const [isNavigating, setIsNavigating] = React.useState(false);
+
+  useEffect(() => {
+    if (typeof loadInitialData === 'function') loadInitialData();
+    if (typeof fetchSettings === 'function') fetchSettings();
+    if (typeof fetchProducts === 'function') fetchProducts();
+  }, [loadInitialData, fetchSettings, fetchProducts]);
 
   useEffect(() => {
     setIsNavigating(true);
@@ -67,22 +77,10 @@ const App: React.FC = () => {
   }, [path]);
 
   useEffect(() => {
-    if (gtmId) {
-        const script = document.createElement('script');
-        script.innerHTML = `
-            (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-            new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-            j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-            'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-            })(window,document,'script','dataLayer','${gtmId}');
-        `;
-        document.head.appendChild(script);
-
-        const noscript = document.createElement('noscript');
-        noscript.innerHTML = `<iframe src="https://www.googletagmanager.com/ns.html?id=${gtmId}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`;
-        document.body.insertBefore(noscript, document.body.firstChild);
+    if (settings) {
+      initTrackingScripts(settings);
     }
-  }, [gtmId]);
+  }, [settings]);
 
   useEffect(() => {
     const productMatch = path.match(/^\/product\/(.+)$/);
@@ -139,6 +137,7 @@ const App: React.FC = () => {
         }
     }
     document.title = pageTitle;
+    trackPageView(pageTitle, window.location.href);
   }, [path, selectedProduct]);
   
   useEffect(() => {
