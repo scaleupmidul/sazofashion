@@ -397,31 +397,35 @@ export const trackAddToCart = (product: Product, size?: string, color?: string, 
 };
 
 // --- 6. INITIATE CHECKOUT ---
-export const trackInitiateCheckout = (cartItems: any[], totalAmount: number) => {
+export const trackInitiateCheckout = (cartItems: any[], totalAmount: number, userData?: any) => {
   if (!cartItems || cartItems.length === 0) return;
 
   const eventId = generateEventId('InitiateCheckout');
-  const contentIds = cartItems.map(item => String(item.product?.productId || item.product?.id || item.product?._id || item.productId || item.id));
+  const contentIds = cartItems.map(item => String(item.product?.productId || item.product?.id || item.product?._id || item.productId || item.id)).filter(Boolean);
   const contents = cartItems.map(item => ({
     id: String(item.product?.productId || item.product?.id || item.product?._id || item.productId || item.id),
     quantity: item.quantity || 1,
     item_price: Number(item.product?.discountPrice || item.product?.price || item.price || 0),
   }));
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const numItems = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
   const fbParams = {
+    content_name: 'Checkout',
     content_type: 'product',
     content_ids: contentIds,
     contents: contents,
     value: Number(totalAmount),
     currency: 'BDT',
-    num_items: cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0),
+    num_items: numItems,
     event_source_url: currentUrl,
   };
 
   pushToDataLayer({
     event: 'begin_checkout',
     event_id: eventId,
+    page_title: typeof document !== 'undefined' ? document.title : 'Checkout',
+    page_location: currentUrl,
     ecommerce: {
       currency: 'BDT',
       value: Number(totalAmount),
@@ -442,7 +446,7 @@ export const trackInitiateCheckout = (cartItems: any[], totalAmount: number) => 
     }
   }
 
-  sendServerEvent('InitiateCheckout', fbParams, undefined, eventId);
+  sendServerEvent('InitiateCheckout', fbParams, userData, eventId);
 };
 
 // Tracked purchase orders guard for deduplication
