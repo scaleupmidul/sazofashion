@@ -1,7 +1,7 @@
 {
-  "name": "unique-corner-backend",
+  "name": "sazo-backend",
   "version": "1.0.0",
-  "description": "Backend for Unique Corner E-commerce App",
+  "description": "Backend for SAZO E-commerce App",
   "main": "server.js",
   "type": "module",
   "scripts": {
