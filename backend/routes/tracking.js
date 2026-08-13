@@ -42,16 +42,17 @@ router.post('/event', async (req, res) => {
         // 2. Meta CAPI
         const cookieFbc = req.cookies?._fbc || req.cookies?.fbc || null;
         const cookieFbp = req.cookies?._fbp || req.cookies?.fbp || null;
-        const userAgent = req.headers['user-agent'];
-        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const userAgent = req.headers['user-agent'] || userData?.userAgent || '';
+        const ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress || req.ip;
 
         const effectiveFbc = userData?.fbc || cookieFbc || null;
         const effectiveFbp = userData?.fbp || cookieFbp || null;
+        const effectiveExternalId = gaClientId || userData?.external_id || null;
         const testCode = (req.body.test_event_code || params?.test_event_code || settings?.fbTestCode || '').trim();
 
         trackMetaCAPI(eventName, params, {
             ...userData,
-            external_id: gaClientId || userData?.external_id,
+            external_id: effectiveExternalId,
             ip,
             userAgent,
             fbc: effectiveFbc,
