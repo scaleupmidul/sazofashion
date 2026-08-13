@@ -386,12 +386,6 @@ const CheckoutPage: React.FC = () => {
     
         const orderId = newOrder.orderId || newOrder.id;
         if (orderId) {
-            trackPurchase(orderId, cartForOrder, totalPayable, {
-              email: formData.email,
-              phone: formData.phone,
-              fullName: formData.fullName,
-              city: formData.city,
-            });
             clearCart();
             navigate(`/thank-you/${orderId}`);
         }
