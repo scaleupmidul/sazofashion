@@ -4,6 +4,7 @@ import ProductSkeleton from '../components/ProductSkeleton';
 import { SlidersHorizontal, X, ArrowRight, Search } from 'lucide-react';
 import { useAppStore } from '../store';
 import { Product } from '../types';
+import { trackViewCategory } from '../services/trackingService';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface CategoryPageProps {
@@ -53,6 +54,12 @@ const CategoryPage: React.FC<CategoryPageProps> = ({ categoryName }) => {
             ensureAllProductsLoaded();
         }
     }, [ensureAllProductsLoaded, fullProductsLoaded]);
+
+    useEffect(() => {
+        if (categoryName) {
+            trackViewCategory(categoryName);
+        }
+    }, [categoryName]);
 
     useEffect(() => {
         const handler = setTimeout(() => {
