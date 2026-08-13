@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../types';
 import { ShoppingCart, X, ArrowRight } from 'lucide-react';
+import { trackViewContent } from '../services/trackingService';
 
 interface QuickViewModalProps {
   product: Product | null;
@@ -18,12 +19,13 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({ product, isOpen, onClos
   const [selectedSize, setSelectedSize] = useState<string | null>(isFreeSizeOnly ? 'Free' : null);
 
   useEffect(() => {
-    if (product) {
+    if (product && isOpen) {
       setQuantity(1);
       const isFreeSize = product.sizes.length === 1 && product.sizes[0] === 'Free';
       setSelectedSize(isFreeSize ? 'Free' : null);
+      trackViewContent(product);
     }
-  }, [product]);
+  }, [product, isOpen]);
   
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
