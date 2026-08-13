@@ -456,7 +456,7 @@ const AdminSettingsPage: React.FC = () => {
         }
         setIsTestingTelegram(true);
         try {
-            const token = localStorage.getItem('unique_corner_admin_token');
+            const token = localStorage.getItem('sazo_admin_token') || localStorage.getItem('unique_corner_admin_token');
             const res = await fetch('/api/settings/test-telegram', {
                 method: 'POST',
                 headers: {
