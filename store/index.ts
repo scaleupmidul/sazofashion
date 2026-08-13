@@ -2,12 +2,12 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { AppState, Product, CartItem, Order, OrderStatus, ContactMessage, AppSettings, AdminProductsResponse } from '../types';
-import { trackServerEvent } from '../services/trackingService';
+import { trackServerEvent, trackAddToCart } from '../services/trackingService';
 
 const API_URL = '/api';
 
 const getTokenFromStorage = (): string | null => {
-    return localStorage.getItem('unique_corner_admin_token');
+    return localStorage.getItem('sazo_admin_token') || localStorage.getItem('unique_corner_admin_token');
 };
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -111,6 +111,24 @@ export const useAppStore = create<any>()(
             }
         },
 
+        fetchSettings: async () => {
+            try {
+                const res = await fetch(`${API_URL}/page-data/home`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.settings) {
+                        set({ settings: data.settings });
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch settings", e);
+            }
+        },
+
+        fetchProducts: async () => {
+            return get().ensureAllProductsLoaded();
+        },
+
         loadAdminData: async () => {
             const { isAdminAuthenticated } = get();
             if (!isAdminAuthenticated) return;
@@ -135,7 +153,7 @@ export const useAppStore = create<any>()(
                     const messagesData = await messagesRes.json();
                     const statsData = await statsRes.json();
                     
-                    const lastSeenOrders = localStorage.getItem('unique_corner_admin_last_orders_seen');
+                    const lastSeenOrders = localStorage.getItem('sazo_admin_last_orders_seen') || localStorage.getItem('unique_corner_admin_last_orders_seen');
                     const lastSeenOrdersDate = lastSeenOrders ? new Date(lastSeenOrders) : new Date(0);
                     const newOrders = ordersData.filter((o: Order) => {
                         const oDate = o.createdAt ? new Date(o.createdAt) : new Date(o.date);
@@ -275,45 +293,8 @@ export const useAppStore = create<any>()(
             set({ cart: newCart });
             get()._updateCartTotal();
 
-            const eventId = `${Date.now()}.${Math.floor(Math.random() * 1000000)}`;
-
-            // Data Layer Push for GTM (Browser Pixel)
-            if (typeof window !== 'undefined') {
-                (window as any).dataLayer = (window as any).dataLayer || [];
-                (window as any).dataLayer.push({ ecommerce: null });
-                (window as any).dataLayer.push({
-                    event: 'AddToCart',
-                    event_id: eventId,
-                    ecommerce: {
-                        currency: 'BDT',
-                        value: product.price * quantity,
-                        items: [{
-                            item_id: itemIdForAnalytics,
-                            item_name: product.name,
-                            price: product.price,
-                            quantity: quantity,
-                            item_variant: size
-                        }]
-                    }
-                });
-            }
-
-            // Unified Server-side Tracking
-            trackServerEvent('AddToCart', {
-                event_id: eventId,
-                value: product.price * quantity,
-                currency: 'BDT',
-                content_ids: [itemIdForAnalytics],
-                content_name: product.name,
-                content_type: 'product',
-                num_items: quantity,
-                items: [{
-                    id: itemIdForAnalytics,
-                    name: product.name,
-                    price: product.price,
-                    quantity: quantity
-                }]
-            }, {});
+            // Track AddToCart via tracking service
+            trackAddToCart(product, size, undefined, quantity);
         },
         
         updateCartQuantity: (id, size, newQuantity) => {
@@ -388,6 +369,7 @@ export const useAppStore = create<any>()(
         },
 
         logout: () => {
+            localStorage.removeItem('sazo_admin_token');
             localStorage.removeItem('unique_corner_admin_token');
             set({ isAdminAuthenticated: false, orders: [], contactMessages: [], dashboardStats: null });
             get().navigate('/');
@@ -432,7 +414,7 @@ export const useAppStore = create<any>()(
                 const res = await fetch(`${API_URL}/orders`, { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!res.ok) throw new Error('Failed to fetch orders');
                 const ordersData = await res.json();
-                const lastSeenOrders = localStorage.getItem('unique_corner_admin_last_orders_seen');
+                const lastSeenOrders = localStorage.getItem('sazo_admin_last_orders_seen') || localStorage.getItem('unique_corner_admin_last_orders_seen');
                 const lastSeenOrdersDate = lastSeenOrders ? new Date(lastSeenOrders) : new Date(0);
                 const newOrders = ordersData.filter((o: Order) => {
                     const oDate = o.createdAt ? new Date(o.createdAt) : new Date(o.date);
@@ -446,7 +428,7 @@ export const useAppStore = create<any>()(
         },
         
         markOrdersAsSeen: () => {
-            localStorage.setItem('unique_corner_admin_last_orders_seen', new Date().toISOString());
+            localStorage.setItem('sazo_admin_last_orders_seen', new Date().toISOString());
             set({ newOrdersCount: 0 });
         },
 
@@ -533,7 +515,7 @@ export const useAppStore = create<any>()(
         },
     }),
     {
-      name: 'unique-corner-storage',
+      name: 'sazo-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ cart: state.cart, settings: state.settings, products: state.products }),
       merge: (persistedState: any, currentState: AppState) => {
