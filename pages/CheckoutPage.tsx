@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useAppStore } from '../store';
 import { LoaderCircle, ChevronDown, Check, ShieldCheck, Lock, ShoppingBag, Search, MapPin, X } from 'lucide-react';
-import { trackServerEvent, trackInitiateCheckout, trackPurchase } from '../services/trackingService';
+import { trackServerEvent, trackInitiateCheckout, trackPurchase, saveCustomerProfile, getStoredCustomerProfile } from '../services/trackingService';
 import { motion, AnimatePresence } from 'motion/react';
 import { Skeleton, Shimmer, TextSkeleton } from '../components/Skeleton';
 
@@ -229,18 +229,21 @@ const CheckoutPage: React.FC = () => {
       };
   }, [storeSettings]);
 
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    city: '',
-    address: '',
-    note: '',
-    paymentMethod: 'COD',
-    shippingOptionId: '',
-    paymentNumber: '',
-    onlinePaymentMethod: 'Choose',
-    transactionId: '',
+  const [formData, setFormData] = useState(() => {
+    const savedProfile = getStoredCustomerProfile();
+    return {
+      fullName: savedProfile.fullName || '',
+      email: savedProfile.email || '',
+      phone: savedProfile.phone || '',
+      city: savedProfile.city || '',
+      address: savedProfile.address || '',
+      note: '',
+      paymentMethod: 'COD',
+      shippingOptionId: '',
+      paymentNumber: '',
+      onlinePaymentMethod: 'Choose',
+      transactionId: '',
+    };
   });
 
   const safeCartTotal = (Number.isFinite(cartTotal) && cartTotal > 0)
@@ -314,6 +317,12 @@ const CheckoutPage: React.FC = () => {
             }
         }
         
+        if (['fullName', 'email', 'phone', 'city', 'address'].includes(name)) {
+            saveCustomerProfile({
+                [name]: value
+            });
+        }
+
         return newData;
     });
   };
@@ -332,6 +341,8 @@ const CheckoutPage: React.FC = () => {
                 newData.shippingOptionId = matchingOption.id;
             }
         }
+
+        saveCustomerProfile({ city: cityName });
         
         return newData;
     });
