@@ -137,8 +137,28 @@ const App: React.FC = () => {
         }
     }
     document.title = pageTitle;
-    trackPageView(pageTitle, window.location.href);
   }, [path, selectedProduct]);
+
+  useEffect(() => {
+    const BASE_TITLE = 'SAZO';
+    let pageTitle = BASE_TITLE;
+    const categoryMatch = path.match(/^\/category\/(.+)$/);
+    if (categoryMatch) {
+        const catSlug = decodeURIComponent(categoryMatch[1]);
+        const capitalized = catSlug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        pageTitle = `${capitalized} - ${BASE_TITLE}`;
+    } else if (path.startsWith('/admin')) {
+        pageTitle = `Admin Panel - ${BASE_TITLE}`;
+    } else {
+        switch (path) {
+            case '/': pageTitle = `${BASE_TITLE} - Premium Luxury Collection`; break;
+            case '/shop': pageTitle = `Shop All - ${BASE_TITLE}`; break;
+            case '/cart': pageTitle = `Your Edit - ${BASE_TITLE}`; break;
+            case '/checkout': pageTitle = `Secure Checkout - ${BASE_TITLE}`; break;
+        }
+    }
+    trackPageView(pageTitle, window.location.href);
+  }, [path]);
   
   useEffect(() => {
     const adminPageCheck = path.startsWith('/admin') && path !== '/admin/login';
