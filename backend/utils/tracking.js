@@ -161,13 +161,15 @@ export const trackMetaCAPI = async (eventName, params = {}, userData = {}, confi
         custom_data.content_category = params.content_category;
     }
 
+    const sourceUrl = (params.event_source_url || params.url || userData.url || 'https://www.sazobd.shop/').trim();
+
     const payload = {
         data: [{
             event_name: eventName,
             event_time: Math.floor(Date.now() / 1000),
             action_source: "website",
             event_id: params.event_id || params.transaction_id || `evt_${Date.now()}`,
-            event_source_url: params.event_source_url || '',
+            event_source_url: sourceUrl,
             user_data,
             ...(Object.keys(custom_data).length > 0 ? { custom_data } : {})
         }],
