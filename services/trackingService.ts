@@ -47,17 +47,6 @@ export const initTrackingScripts = (settings: any) => {
       if (window.fbq) {
         window.fbq('set', 'autoConfig', false, pixelId);
         window.fbq('init', pixelId);
-        window.fbq('track', 'PageView');
-      }
-
-      // Inject noscript tag so Meta Pixel Helper / Meta Ads Data Advisor extension detects Pixel in DOM
-      if (!document.getElementById(`meta-pixel-noscript-${pixelId}`)) {
-        const noscript = document.createElement('noscript');
-        noscript.id = `meta-pixel-noscript-${pixelId}`;
-        noscript.innerHTML = `<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${encodeURIComponent(pixelId)}&ev=PageView&noscript=1" />`;
-        if (document.body) {
-          document.body.appendChild(noscript);
-        }
       }
 
       console.log(`[Tracking] Meta Pixel Initialized: ${pixelId}`);
@@ -158,9 +147,20 @@ export const sendServerEvent = async (eventName: string, eventData: any, userDat
 
 export const trackServerEvent = sendServerEvent;
 
+// Deduplication guard for page_view
+let lastTrackedPageView = { url: '', timestamp: 0 };
+
 // --- 1. PAGE VIEW EVENT ---
 export const trackPageView = (pageName: string, url?: string) => {
   const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+  const now = Date.now();
+
+  // Deduplication: Prevent duplicate PageView within 1.5 seconds on the same URL
+  if (lastTrackedPageView.url === currentUrl && (now - lastTrackedPageView.timestamp) < 1500) {
+    return;
+  }
+  lastTrackedPageView = { url: currentUrl, timestamp: now };
+
   const eventId = generateEventId('page_view');
 
   pushToDataLayer({
