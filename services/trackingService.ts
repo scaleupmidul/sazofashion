@@ -59,6 +59,133 @@ export const getActiveTestEventCode = (): string | undefined => {
   return undefined;
 };
 
+// Extract and preserve Click ID (fbc) with full Facebook standard formatting
+export const getOrCreateFbc = (): string | null => {
+  if (typeof window === 'undefined') return null;
+
+  // 1. Check existing cookie
+  let fbc = getCookie('_fbc') || getCookie('fbc');
+  if (fbc && fbc.startsWith('fb.1.')) return fbc;
+
+  // 2. Check localStorage / sessionStorage
+  try {
+    const stored = localStorage.getItem('_fbc') || sessionStorage.getItem('_fbc');
+    if (stored && stored.startsWith('fb.1.')) {
+      fbc = stored;
+      try {
+        document.cookie = `_fbc=${fbc};path=/;max-age=7776000;SameSite=Lax`;
+      } catch (e) {}
+      return fbc;
+    }
+  } catch (e) {}
+
+  // 3. Extract fbclid from URL search parameters (?fbclid=...)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const fbclid = urlParams.get('fbclid');
+    if (fbclid) {
+      const creationTime = Date.now();
+      fbc = `fb.1.${creationTime}.${fbclid}`;
+      document.cookie = `_fbc=${fbc};path=/;max-age=7776000;SameSite=Lax`;
+      localStorage.setItem('_fbc', fbc);
+      sessionStorage.setItem('_fbc', fbc);
+      return fbc;
+    }
+  } catch (e) {}
+
+  // 4. Extract fbclid from document.referrer
+  if (typeof document !== 'undefined' && document.referrer) {
+    try {
+      const refUrl = new URL(document.referrer);
+      const refFbclid = refUrl.searchParams.get('fbclid');
+      if (refFbclid) {
+        const creationTime = Date.now();
+        fbc = `fb.1.${creationTime}.${refFbclid}`;
+        document.cookie = `_fbc=${fbc};path=/;max-age=7776000;SameSite=Lax`;
+        localStorage.setItem('_fbc', fbc);
+        sessionStorage.setItem('_fbc', fbc);
+        return fbc;
+      }
+    } catch (e) {}
+  }
+
+  return null;
+};
+
+export const saveCustomerProfile = (profile: {
+  email?: string;
+  phone?: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  city?: string;
+  address?: string;
+  zip?: string;
+}) => {
+  if (typeof window === 'undefined') return;
+  try {
+    const existing = getStoredCustomerProfile();
+    const fullName = (profile.fullName || '').trim() || existing.fullName;
+    let firstName = profile.firstName || existing.firstName;
+    let lastName = profile.lastName || existing.lastName;
+
+    if (fullName && (!firstName || !lastName)) {
+      const parts = fullName.split(' ');
+      if (!firstName) firstName = parts[0];
+      if (!lastName && parts.length > 1) lastName = parts.slice(1).join(' ');
+    }
+
+    const merged = {
+      ...existing,
+      ...(profile.email ? { email: profile.email.trim() } : {}),
+      ...(profile.phone ? { phone: profile.phone.trim() } : {}),
+      ...(fullName ? { fullName } : {}),
+      ...(firstName ? { firstName } : {}),
+      ...(lastName ? { lastName } : {}),
+      ...(profile.city ? { city: profile.city.trim() } : {}),
+      ...(profile.address ? { address: profile.address.trim() } : {}),
+      ...(profile.zip ? { zip: profile.zip.trim() } : {}),
+    };
+    localStorage.setItem('sazo_customer_profile', JSON.stringify(merged));
+
+    // Update Meta Pixel user properties dynamically if available
+    if (window.fbq && (merged.email || merged.phone || merged.fullName || merged.city)) {
+      try {
+        const userProps: Record<string, any> = {
+          external_id: getOrCreateClientId(),
+          country: 'bd',
+        };
+        if (merged.email) userProps.em = merged.email;
+        if (merged.phone) userProps.ph = merged.phone;
+        if (merged.firstName) userProps.fn = merged.firstName;
+        if (merged.lastName) userProps.ln = merged.lastName;
+        if (merged.city) userProps.ct = merged.city;
+        window.fbq('setUserProperties', initializedPixelId, userProps);
+      } catch (e) {}
+    }
+  } catch (e) {}
+};
+
+export const getStoredCustomerProfile = (): {
+  email?: string;
+  phone?: string;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  city?: string;
+  address?: string;
+  zip?: string;
+} => {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem('sazo_customer_profile');
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch (e) {}
+  return {};
+};
+
 export const initTrackingScripts = (settings: any) => {
   if (typeof window === 'undefined' || !settings) return;
 
@@ -74,6 +201,10 @@ export const initTrackingScripts = (settings: any) => {
       sessionStorage.setItem('fb_test_code', activeFbTestCode);
     } catch (e) {}
   }
+
+  // Pre-initialize and capture fbc & fbp immediately on load
+  getOrCreateFbp();
+  getOrCreateFbc();
 
   // Read URL test code right away if present on load
   getActiveTestEventCode();
@@ -102,10 +233,23 @@ export const initTrackingScripts = (settings: any) => {
       if (window.fbq) {
         (window.fbq as any).disablePushState = true;
         window.fbq('set', 'autoConfig', false, pixelId);
-        window.fbq('init', pixelId);
+
+        const profile = getStoredCustomerProfile();
+        const clientId = getOrCreateClientId();
+        const advancedMatching: Record<string, any> = {
+          external_id: clientId,
+          country: 'bd',
+        };
+        if (profile.email) advancedMatching.em = profile.email;
+        if (profile.phone) advancedMatching.ph = profile.phone;
+        if (profile.firstName) advancedMatching.fn = profile.firstName;
+        if (profile.lastName) advancedMatching.ln = profile.lastName;
+        if (profile.city) advancedMatching.ct = profile.city;
+
+        window.fbq('init', pixelId, advancedMatching);
       }
 
-      console.log(`[Tracking] Meta Pixel Initialized: ${pixelId}`);
+      console.log(`[Tracking] Meta Pixel Initialized with Advanced Matching: ${pixelId}`);
     } catch (e) {
       console.error('[Tracking] Meta Pixel Init Error:', e);
     }
@@ -213,12 +357,30 @@ export const sendServerEvent = async (eventName: string, eventData: any, userDat
   if (typeof window === 'undefined') return;
   try {
     const fbp = getOrCreateFbp();
-    const fbc = getCookie('_fbc') || getCookie('fbc') || undefined;
+    const fbc = getOrCreateFbc();
     const clientId = getOrCreateClientId();
+    const profile = getStoredCustomerProfile();
     const currentUrl = window.location.href;
     const testEventCode = getActiveTestEventCode();
 
     const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : undefined;
+
+    const enrichedUserData = {
+      email: userData?.email || profile.email || undefined,
+      phone: userData?.phone || userData?.phone_number || profile.phone || undefined,
+      fullName: userData?.fullName || userData?.full_name || profile.fullName || undefined,
+      firstName: userData?.firstName || userData?.first_name || profile.firstName || undefined,
+      lastName: userData?.lastName || userData?.last_name || profile.lastName || undefined,
+      city: userData?.city || profile.city || undefined,
+      address: userData?.address || profile.address || undefined,
+      zip: userData?.zip || userData?.postal_code || profile.zip || undefined,
+      country: userData?.country || 'BD',
+      userAgent: userAgent || userData?.userAgent,
+      external_id: clientId || userData?.external_id,
+      fbp: fbp || userData?.fbp,
+      fbc: fbc || userData?.fbc,
+      ...userData,
+    };
 
     const payload = {
       eventName,
@@ -231,13 +393,7 @@ export const sendServerEvent = async (eventName: string, eventData: any, userDat
         event_source_url: currentUrl,
         test_event_code: testEventCode,
       },
-      userData: {
-        ...userData,
-        userAgent: userAgent || userData?.userAgent,
-        external_id: clientId || userData?.external_id,
-        fbp: fbp || userData?.fbp,
-        fbc: fbc || userData?.fbc,
-      },
+      userData: enrichedUserData,
       url: currentUrl,
     };
 
