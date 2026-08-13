@@ -250,18 +250,7 @@ export const useAppStore = create<any>()(
                         updatedProducts.push(freshProduct);
                     }
 
-                    let newSelected = state.selectedProduct;
-                    const isSelectedMatch = !newSelected || 
-                        String(newSelected.id) === String(freshProduct.id) || 
-                        String(newSelected.productId) === String(freshProduct.productId) ||
-                        ((newSelected as any)._id && (freshProduct as any)._id && String((newSelected as any)._id) === String((freshProduct as any)._id)) ||
-                        String(newSelected.id) === String(id) ||
-                        String(newSelected.productId) === String(id);
-
-                    if (isSelectedMatch) {
-                        newSelected = freshProduct;
-                    }
-                    return { products: updatedProducts, selectedProduct: newSelected };
+                    return { products: updatedProducts, selectedProduct: freshProduct };
                 });
             } catch (e) {
                 console.error("Failed to refresh product", e);
