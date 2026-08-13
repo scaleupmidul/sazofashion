@@ -14,6 +14,51 @@ let initializedPixelId: string | null = null;
 let initializedGa4Id: string | null = null;
 let initializedGtmId: string | null = null;
 
+let activeFbTestCode: string = '';
+
+export const getActiveTestEventCode = (): string | undefined => {
+  if (typeof window === 'undefined') return undefined;
+  try {
+    // 1. Check URL parameters (?test_event_code=TEST... or ?test_code=... or ?fb_test_code=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlTestCode = urlParams.get('test_event_code') || urlParams.get('test_code') || urlParams.get('fb_test_code');
+    if (urlTestCode && urlTestCode.trim()) {
+      const cleaned = urlTestCode.trim();
+      sessionStorage.setItem('fb_test_code', cleaned);
+      localStorage.setItem('fb_test_code', cleaned);
+      document.cookie = `fb_test_code=${cleaned};path=/;max-age=86400;SameSite=Lax`;
+      activeFbTestCode = cleaned;
+      return cleaned;
+    }
+
+    // 2. Check storage
+    const sessionCode = sessionStorage.getItem('fb_test_code');
+    if (sessionCode && sessionCode.trim()) {
+      activeFbTestCode = sessionCode.trim();
+      return activeFbTestCode;
+    }
+
+    const localCode = localStorage.getItem('fb_test_code');
+    if (localCode && localCode.trim()) {
+      activeFbTestCode = localCode.trim();
+      return activeFbTestCode;
+    }
+
+    // 3. Check cookie
+    const cookieCode = getCookie('fb_test_code');
+    if (cookieCode && cookieCode.trim()) {
+      activeFbTestCode = cookieCode.trim();
+      return activeFbTestCode;
+    }
+
+    // 4. Check initialized settings test code
+    if (activeFbTestCode && activeFbTestCode.trim()) {
+      return activeFbTestCode.trim();
+    }
+  } catch (e) {}
+  return undefined;
+};
+
 export const initTrackingScripts = (settings: any) => {
   if (typeof window === 'undefined' || !settings) return;
 
@@ -22,6 +67,16 @@ export const initTrackingScripts = (settings: any) => {
   const pixelId = (settings.fbPixelId || settings.pixelId || settings.metaPixelId || '').trim();
   const gaId = (settings.gaMeasurementId || settings.ga4MeasurementId || '').trim();
   const gtmId = (settings.gtmId || '').trim();
+  if (settings.fbTestCode && typeof settings.fbTestCode === 'string' && settings.fbTestCode.trim()) {
+    activeFbTestCode = settings.fbTestCode.trim();
+    try {
+      localStorage.setItem('fb_test_code', activeFbTestCode);
+      sessionStorage.setItem('fb_test_code', activeFbTestCode);
+    } catch (e) {}
+  }
+
+  // Read URL test code right away if present on load
+  getActiveTestEventCode();
 
   // 1. Meta Pixel Script Injection
   if (pixelId && pixelId !== initializedPixelId) {
@@ -161,14 +216,18 @@ export const sendServerEvent = async (eventName: string, eventData: any, userDat
     const fbc = getCookie('_fbc') || getCookie('fbc') || undefined;
     const clientId = getOrCreateClientId();
     const currentUrl = window.location.href;
+    const testEventCode = getActiveTestEventCode();
 
     const payload = {
       eventName,
       gaClientId: clientId,
+      test_event_code: testEventCode,
+      pixelId: initializedPixelId || undefined,
       params: {
         ...eventData,
         event_id: eventId,
         event_source_url: currentUrl,
+        test_event_code: testEventCode,
       },
       userData: {
         ...userData,
