@@ -332,42 +332,6 @@ router.post('/', async (req, res) => {
                 gaMeasurementId: settings?.gaMeasurementId,
                 gaApiSecret: settings?.gaApiSecret
             }).catch(e => console.log("GA4 Tracking error:", e.message));
-
-            // Meta CAPI Tracking
-            const fbc = req.cookies?._fbc || req.cookies?.fbc || null;
-            const fbp = req.cookies?._fbp || req.cookies?.fbp || null;
-            const userAgent = req.headers['user-agent'];
-            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-
-            // Split name for Meta
-            const nameParts = (customerDetails?.firstName || '').split(' ');
-            const firstName = nameParts[0] || '';
-            const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
-
-            trackMetaCAPI('Purchase', {
-                transaction_id: createdOrder.orderId,
-                value: total,
-                currency: 'BDT',
-                shipping: shippingCharge,
-                content_ids: cartItems.map(i => i.productId || i.id),
-                num_items: cartItems.length
-            }, {
-                email: customerDetails.email || '',
-                phone: customerDetails.phone || '',
-                firstName,
-                lastName,
-                city: customerDetails.city || '',
-                country: 'Bangladesh',
-                external_id: gaClientId,
-                ip,
-                userAgent,
-                fbc,
-                fbp
-            }, {
-                fbPixelId: settings?.fbPixelId,
-                fbAccessToken: settings?.fbAccessToken,
-                fbTestCode: settings?.fbTestCode
-            }).catch(e => console.log("Meta CAPI error:", e.message));
         }
     } catch (err) {
         console.error("Tracking error:", err.message);
