@@ -25,6 +25,8 @@ router.post('/event', async (req, res) => {
         const userAgent = req.headers['user-agent'];
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
 
+        const testCode = (req.body.test_event_code || params?.test_event_code || settings?.fbTestCode || '').trim();
+
         trackMetaCAPI(eventName, params, {
             ...userData,
             external_id: gaClientId,
@@ -35,7 +37,7 @@ router.post('/event', async (req, res) => {
         }, {
             fbPixelId: settings?.fbPixelId,
             fbAccessToken: settings?.fbAccessToken,
-            fbTestCode: settings?.fbTestCode
+            fbTestCode: testCode || undefined
         }).catch(e => console.log("Meta CAPI Error:", e.message));
 
         res.status(200).json({ status: 'sent' });
