@@ -35,7 +35,7 @@ export const initTrackingScripts = (settings: any) => {
         {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
         n.callMethod.apply(n,arguments):n.queue.push(arguments)};
         if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-        n.queue=[];t=b.createElement(e);t.async=!0;
+        n.queue=[];n.disablePushState=true;t=b.createElement(e);t.async=!0;
         t.src=v;s=b.getElementsByTagName(e)[0];
         s.parentNode.insertBefore(t,s)}(window, document,'script',
         'https://connect.facebook.net/en_US/fbevents.js');
@@ -45,6 +45,7 @@ export const initTrackingScripts = (settings: any) => {
 
     try {
       if (window.fbq) {
+        (window.fbq as any).disablePushState = true;
         window.fbq('set', 'autoConfig', false, pixelId);
         window.fbq('init', pixelId);
       }
@@ -211,14 +212,15 @@ export const trackViewContent = (product: Product) => {
   const productId = String(product.productId || product.id || (product as any)._id);
   const now = Date.now();
 
-  // Prevent double-firing view_item within 2 seconds for the same product
-  if (lastTrackedViewProduct.id === productId && (now - lastTrackedViewProduct.timestamp) < 2000) {
+  // Prevent double-firing view_item within 4 seconds for the same product
+  if (lastTrackedViewProduct.id === productId && (now - lastTrackedViewProduct.timestamp) < 4000) {
     return;
   }
   lastTrackedViewProduct = { id: productId, timestamp: now };
 
   const productValue = Number((product as any).discountPrice || product.price || 0);
   const eventId = generateEventId('ViewContent');
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   const fbParams = {
     content_name: product.name,
@@ -228,13 +230,14 @@ export const trackViewContent = (product: Product) => {
     contents: [{ id: productId, quantity: 1, item_price: productValue }],
     value: productValue,
     currency: 'BDT',
+    event_source_url: currentUrl,
   };
 
   pushToDataLayer({
     event: 'view_item',
     event_id: eventId,
     page_title: typeof document !== 'undefined' ? document.title : '',
-    page_location: typeof window !== 'undefined' ? window.location.href : '',
+    page_location: currentUrl,
     ecommerce: {
       currency: 'BDT',
       value: productValue,
@@ -445,7 +448,7 @@ export const trackPurchase = (
     } catch (e) {}
   }
 
-  const eventId = generateEventId('Purchase');
+  const eventId = `Purchase_${cleanOrderId}`;
   const contentIds = cartItems.map(item => extractProductId(item)).filter(Boolean);
   const contents = cartItems.map(item => ({
     id: extractProductId(item),
@@ -454,6 +457,7 @@ export const trackPurchase = (
   }));
 
   const totalQty = cartItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   const fbParams = {
     content_name: cartItems.map(i => i.name || i.product?.name || 'Product').join(', '),
@@ -465,6 +469,7 @@ export const trackPurchase = (
     currency: 'BDT',
     num_items: totalQty,
     order_id: cleanOrderId,
+    event_source_url: currentUrl,
   };
 
   const fullNameStr = (userData?.fullName || '').trim();
@@ -487,7 +492,7 @@ export const trackPurchase = (
     event: 'purchase',
     event_id: eventId,
     page_title: typeof document !== 'undefined' ? document.title : '',
-    page_location: typeof window !== 'undefined' ? window.location.href : '',
+    page_location: currentUrl,
     user_data: {
       email: formattedUserData.email,
       phone_number: formattedUserData.phone,
@@ -514,7 +519,7 @@ export const trackPurchase = (
       address: formattedUserData.address,
     },
     ecommerce: {
-      transaction_id: String(orderId),
+      transaction_id: cleanOrderId,
       value: Number(totalAmount),
       currency: 'BDT',
       tax: 0,
@@ -531,15 +536,6 @@ export const trackPurchase = (
 
   if (typeof window !== 'undefined' && window.fbq) {
     try {
-      if (initializedPixelId && (formattedUserData.email || formattedUserData.phone)) {
-        window.fbq('init', initializedPixelId, {
-          em: formattedUserData.email,
-          ph: formattedUserData.phone,
-          fn: formattedUserData.firstName,
-          ln: formattedUserData.lastName,
-          ct: formattedUserData.city,
-        });
-      }
       window.fbq('track', 'Purchase', fbParams, { eventID: eventId });
     } catch (e) {
       console.warn('[FBQ Purchase Error]', e);
