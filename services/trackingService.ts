@@ -126,7 +126,7 @@ export const sendServerEvent = async (eventName: string, eventData: any, userDat
     const fbp = getCookie('_fbp') || getCookie('fbp');
     const fbc = getCookie('_fbc') || getCookie('fbc');
 
-    await axios.post('/api/track/event', {
+    const payload = {
       eventName,
       params: {
         ...eventData,
@@ -139,7 +139,18 @@ export const sendServerEvent = async (eventName: string, eventData: any, userDat
         fbc: fbc || userData?.fbc,
       },
       url: window.location.href,
-    });
+    };
+
+    if (typeof fetch !== 'undefined') {
+      fetch('/api/track/event', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(err => console.warn('[Tracking CAPI] Fetch error:', err));
+    } else {
+      await axios.post('/api/track/event', payload);
+    }
   } catch (err) {
     console.warn('[Tracking CAPI] Failed to dispatch server event', err);
   }
@@ -148,18 +159,19 @@ export const sendServerEvent = async (eventName: string, eventData: any, userDat
 export const trackServerEvent = sendServerEvent;
 
 // Deduplication guard for page_view
-let lastTrackedPageView = { url: '', timestamp: 0 };
+let lastTrackedPageView = { path: '', timestamp: 0 };
 
 // --- 1. PAGE VIEW EVENT ---
 export const trackPageView = (pageName: string, url?: string) => {
   const currentUrl = url || (typeof window !== 'undefined' ? window.location.href : '');
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
   const now = Date.now();
 
-  // Deduplication: Prevent duplicate PageView within 1.5 seconds on the same URL
-  if (lastTrackedPageView.url === currentUrl && (now - lastTrackedPageView.timestamp) < 1500) {
+  // Deduplication: Prevent duplicate PageView within 2 seconds on the same path
+  if (lastTrackedPageView.path === pathname && (now - lastTrackedPageView.timestamp) < 2000) {
     return;
   }
-  lastTrackedPageView = { url: currentUrl, timestamp: now };
+  lastTrackedPageView = { path: pathname, timestamp: now };
 
   const eventId = generateEventId('page_view');
 
@@ -172,7 +184,7 @@ export const trackPageView = (pageName: string, url?: string) => {
 
   if (typeof window !== 'undefined' && window.fbq) {
     try {
-      window.fbq('track', 'PageView', { page_title: pageName, page_location: currentUrl }, { eventID: eventId });
+      window.fbq('track', 'PageView', {}, { eventID: eventId });
     } catch (e) {
       console.warn('[FBQ Error]', e);
     }
