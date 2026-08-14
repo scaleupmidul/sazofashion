@@ -147,22 +147,6 @@ export const saveCustomerProfile = (profile: {
       ...(profile.zip ? { zip: profile.zip.trim() } : {}),
     };
     localStorage.setItem('sazo_customer_profile', JSON.stringify(merged));
-
-    // Update Meta Pixel user properties dynamically if available
-    if (window.fbq && (merged.email || merged.phone || merged.fullName || merged.city)) {
-      try {
-        const userProps: Record<string, any> = {
-          external_id: getOrCreateClientId(),
-          country: 'bd',
-        };
-        if (merged.email) userProps.em = merged.email;
-        if (merged.phone) userProps.ph = merged.phone;
-        if (merged.firstName) userProps.fn = merged.firstName;
-        if (merged.lastName) userProps.ln = merged.lastName;
-        if (merged.city) userProps.ct = merged.city;
-        window.fbq('setUserProperties', initializedPixelId, userProps);
-      } catch (e) {}
-    }
   } catch (e) {}
 };
 
