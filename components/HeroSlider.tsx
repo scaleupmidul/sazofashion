@@ -13,52 +13,38 @@ const HeroImage: React.FC<{
     scrollYProgress: any; 
     onLoad: () => void;
     isActive: boolean;
-}> = ({ src, alt, scrollYProgress, onLoad, isActive }) => {
+    isPriority?: boolean;
+}> = ({ src, alt, scrollYProgress, onLoad, isActive, isPriority }) => {
     const y = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
     const [loaded, setLoaded] = useState(false);
     const [error, setError] = useState(false);
-
-    useEffect(() => {
-        setLoaded(false);
-        setError(false);
-    }, [src]);
 
     const hasImage = !!src && typeof src === 'string' && src.trim() !== '';
 
     if (!hasImage || error) {
         return (
-            <div className="absolute inset-0 bg-[#f3f0ea]/70 backdrop-blur-md flex items-center justify-center overflow-hidden">
-                <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 rounded-full bg-[#C38B7C]/10 filter blur-3xl animate-[pulse_6s_infinite_ease-in-out]" />
-                <div className="absolute bottom-1/4 right-1/4 w-1/3 h-1/3 rounded-full bg-[#1A1A1A]/5 filter blur-2xl animate-[pulse_4s_infinite_ease-in-out_1s]" />
+            <div className="absolute inset-0 bg-[#f3f0ea] flex items-center justify-center overflow-hidden">
+                <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 rounded-full bg-[#C38B7C]/10 filter blur-3xl" />
+                <div className="absolute bottom-1/4 right-1/4 w-1/3 h-1/3 rounded-full bg-[#1A1A1A]/5 filter blur-2xl" />
             </div>
         );
     }
 
     return (
         <div className="absolute inset-0 overflow-hidden bg-[#f3f0ea]">
-            {!loaded && (
-                <div className="absolute inset-0 bg-[#f3f0ea]/70 backdrop-blur-md flex items-center justify-center z-10">
-                    <div className="w-full h-full bg-gradient-to-r from-stone-100 via-stone-200/50 to-stone-100 bg-[length:200%_100%] animate-pulse" />
-                    <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 rounded-full bg-[#C38B7C]/10 filter blur-3xl animate-[pulse_4s_infinite]" />
-                </div>
-            )}
             <motion.img
-                initial={{ opacity: 0 }}
-                animate={{ 
-                    opacity: loaded ? 1 : 0 
-                }}
+                key={src}
                 style={{ y, willChange: 'transform' }}
-                transition={{ 
-                    opacity: { duration: 1.8, ease: "easeOut" }
-                }}
                 src={src}
                 alt={alt}
+                loading={isPriority ? "eager" : "lazy"}
+                decoding="async"
                 onLoad={() => {
                     setLoaded(true);
                     onLoad();
                 }}
                 onError={() => setError(true)}
-                className="object-cover w-full h-full block"
+                className={`object-cover w-full h-full block transition-opacity duration-500 ${loaded || isPriority ? 'opacity-100' : 'opacity-90'}`}
             />
         </div>
     );
@@ -75,7 +61,9 @@ const HeroSlider: React.FC = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [prevSlide, setPrevSlide] = useState<number | null>(null);
     const [loadedSlides, setLoadedSlides] = useState<Record<number, boolean>>({});
-    const [isMobile, setIsMobile] = useState(false);
+    const [isMobile, setIsMobile] = useState(() => 
+        typeof window !== 'undefined' ? window.innerWidth < 768 : false
+    );
     
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -152,16 +140,20 @@ const HeroSlider: React.FC = () => {
                 if (isActive) zIndex = 10;
                 else if (isPrev) zIndex = 5;
 
-                const activeImage = isMobile && slide.mobileImage ? slide.mobileImage : (slide.image || slide.mobileImage || '');
+                const activeImage = isMobile 
+                    ? (slide.mobileImage || slide.image || '') 
+                    : (slide.image || slide.mobileImage || '');
+
+                const isFirstSlide = index === 0;
 
                 return (
                     <motion.div
                         key={index}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: isActive ? 1 : (isPrev ? 0 : 0) }}
+                        initial={isFirstSlide ? { opacity: 1 } : { opacity: 0 }}
+                        animate={{ opacity: isActive ? 1 : 0 }}
                         transition={{ 
-                            duration: 2.2, 
-                            ease: [0.25, 0.1, 0.25, 1.0] // Very gentle, classic slow crossfade
+                            duration: 0.8, 
+                            ease: "easeInOut"
                         }}
                         className="absolute inset-0"
                         style={{ 
@@ -176,47 +168,48 @@ const HeroSlider: React.FC = () => {
                             scrollYProgress={scrollYProgress}
                             onLoad={() => handleImageLoad(index)} 
                             isActive={isActive}
+                            isPriority={isFirstSlide}
                         />
-                        <div className={`absolute inset-0 transition-colors duration-700 ${showSliderText ? 'bg-black/40' : 'bg-transparent'}`}></div>
+                        <div className={`absolute inset-0 transition-colors duration-500 ${showSliderText ? 'bg-black/40' : 'bg-transparent'}`}></div>
                         
                         {showSliderText && (
                             <motion.div 
                                 style={{ opacity }}
                                 animate={{ opacity: isActive ? 1 : 0 }}
-                                transition={{ duration: 1.5, ease: "easeInOut" }}
+                                transition={{ duration: 0.6, ease: "easeInOut" }}
                                 className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 md:px-12 z-20"
                             >
                                 <motion.span
-                                    initial={{ opacity: 0, y: 15 }}
+                                    initial={isFirstSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                                     animate={{ 
                                         opacity: isActive ? 1 : 0, 
-                                        y: isActive ? 0 : -10 
+                                        y: isActive ? 0 : -5 
                                     }}
-                                    transition={{ duration: 1.4, delay: isActive ? 0.4 : 0, ease: [0.16, 1, 0.3, 1] }}
+                                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                                     className="text-white font-display font-bold uppercase tracking-[0.4em] text-[9px] md:text-[11px] mb-8"
                                 >
                                     {slide.subtitle || "The New Era of Luxury"}
                                 </motion.span>
                                 
                                 <motion.h2 
-                                    initial={{ opacity: 0, y: 25 }}
+                                    initial={isFirstSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 15 }}
                                     animate={{ 
                                         opacity: isActive ? 1 : 0, 
-                                        y: isActive ? 0 : -15 
+                                        y: isActive ? 0 : -10 
                                     }}
-                                    transition={{ duration: 1.6, delay: isActive ? 0.6 : 0, ease: [0.16, 1, 0.3, 1] }}
+                                    transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                                     className="text-4xl md:text-6xl lg:text-8xl font-serif text-white leading-[0.95] mb-12"
                                 >
                                     {slide.title}
                                 </motion.h2>
 
                                 <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
+                                    initial={isFirstSlide ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
                                     animate={{ 
                                         opacity: isActive ? 1 : 0, 
-                                        y: isActive ? 0 : -10 
+                                        y: isActive ? 0 : -5 
                                     }}
-                                    transition={{ duration: 1.4, delay: isActive ? 0.8 : 0, ease: [0.16, 1, 0.3, 1] }}
+                                    transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
                                 >
                                     <button
                                         onClick={() => navigate('/shop')}
