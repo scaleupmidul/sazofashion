@@ -59,15 +59,21 @@ const App: React.FC = () => {
   const fetchProducts = useAppStore(state => state.fetchProducts);
   const [isNavigating, setIsNavigating] = React.useState(false);
 
-  useEffect(() => {
-    if (typeof loadInitialData === 'function') loadInitialData();
-    if (typeof fetchSettings === 'function') fetchSettings();
-    if (typeof fetchProducts === 'function') fetchProducts();
-  }, [loadInitialData, fetchSettings, fetchProducts]);
+  const isFirstRender = React.useRef(true);
 
   useEffect(() => {
+    if (typeof loadInitialData === 'function') {
+      loadInitialData();
+    }
+  }, [loadInitialData]);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
     setIsNavigating(true);
-    const timer = setTimeout(() => setIsNavigating(false), 800);
+    const timer = setTimeout(() => setIsNavigating(false), 400);
     
     window.scrollTo({ top: 0, behavior: 'auto' });
     document.documentElement.scrollTop = 0;
