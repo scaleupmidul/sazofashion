@@ -1,6 +1,6 @@
 {
-  "name": "Remix SAZO main final 🔥🔥🔥🔥",
-  "description": "SAZO - A premium Women\u0027s Fashion Brand. Discover a curated collection of modern essentials, from premium silk to elegant party wear, designed to elevate your style and lifestyle.",
+  "name": "SAZO",
+  "description": "SAZO - A premier Women\u0027s Fashion Brand. Discover a curated luxury collection of modern essentials, from exquisite silk wear to timeless lifestyle pieces, designed to elevate your personal style.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
