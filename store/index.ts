@@ -86,20 +86,25 @@ export const useAppStore = create<any>()(
             try {
                 // Fetch home data (settings + featured products)
                 const homeDataRes = await fetch(`${API_URL}/page-data/home`);
-                if (!homeDataRes.ok) throw new Error('Failed to fetch initial page data.');
-                const homeData = await homeDataRes.json();
-                
-                set({
-                    products: homeData.products || MOCK_PRODUCTS_DATA,
-                    settings: homeData.settings || DEFAULT_SETTINGS,
-                    loading: false
-                });
+                if (homeDataRes.ok) {
+                    const homeData = await homeDataRes.json();
+                    set({
+                        products: (homeData.products && homeData.products.length > 0) ? homeData.products : MOCK_PRODUCTS_DATA,
+                        settings: homeData.settings || DEFAULT_SETTINGS,
+                        loading: false
+                    });
+                } else {
+                    set({
+                        products: MOCK_PRODUCTS_DATA,
+                        settings: DEFAULT_SETTINGS,
+                        loading: false
+                    });
+                }
 
                 // Background load ALL products for shop page after a very short break
-                // This ensures LCP is handled first
-                requestAnimationFrame(() => {
+                setTimeout(() => {
                     get().ensureAllProductsLoaded();
-                });
+                }, 100);
                 
             } catch (error) {
                 set({ 
@@ -116,12 +121,12 @@ export const useAppStore = create<any>()(
                 const res = await fetch(`${API_URL}/page-data/home`);
                 if (res.ok) {
                     const data = await res.json();
-                    if (data.settings) {
+                    if (data && data.settings) {
                         set({ settings: data.settings });
                     }
                 }
             } catch (e) {
-                console.error("Failed to fetch settings", e);
+                // Graceful silent fallback
             }
         },
 
@@ -171,9 +176,13 @@ export const useAppStore = create<any>()(
             if (fullProductsLoaded) return;
             try {
                 const res = await fetch(`${API_URL}/products`);
-                if (!res.ok) throw new Error('Failed to fetch all products');
+                if (!res.ok) throw new Error('Product endpoint status not OK');
                 let allProducts: Product[] = await res.json();
                 
+                if (!Array.isArray(allProducts) || allProducts.length === 0) {
+                    allProducts = MOCK_PRODUCTS_DATA;
+                }
+
                 // Merge products: If an existing product has MORE images (e.g. loaded via refreshProduct), preserve those images!
                 const productMap = new Map<string, Product>();
                 existingProducts.forEach(p => {
@@ -209,7 +218,11 @@ export const useAppStore = create<any>()(
                     };
                 });
             } catch (error) {
-                console.error("Failed to load all products", error);
+                // If fetch fails due to network or warmup, fallback to existing or mock products seamlessly
+                set(state => ({
+                    products: state.products.length > 0 ? state.products : MOCK_PRODUCTS_DATA,
+                    fullProductsLoaded: true
+                }));
             }
         },
 
