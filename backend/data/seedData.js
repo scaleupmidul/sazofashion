@@ -70,7 +70,7 @@ Welcome to SAZO. We are committed to protecting your privacy...
         id: '1',
         header: 'PREMIUM COLLECTION',
         title: 'New Season Arrivals',
-        description: 'Explore our latest curation of exquisite garments designed for the modern lifestyle.',
+        description: 'Explore our latest curation of exquisite pieces designed for the modern woman.',
         buttonText: 'Discover Collection',
         link: '/shop',
         desktopImage: '',
